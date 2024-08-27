@@ -1,11 +1,16 @@
 ---
 title: "JIBE_Melbourne_Mode_Choice"
+format: gfm
 ---
 
-## Quarto
+## Background
 
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+To conduct the JIBE mode choice modelling for Melbourne requires data preparation using travel survey data. The analysis draws on the [Victorian Integrated Survey of Travel and Activity](https://www.vic.gov.au/victorian-integrated-survey-travel-and-activity) (VISTA[^1]) for 2012-20, used with permission from the Victorian Department of Transport.
 
+## System information
+The following information records the version of R used for this analysis:
 ```{r}
-1 + 1
+version
 ```
+
+[^1]: Victorian Government Department of Transport. 2022. Victorian Integrated Survey of Travel and Activity 2012-2020. https://www.vic.gov.au/victorian-integrated-survey-travel-and-activity
