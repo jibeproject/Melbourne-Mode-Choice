@@ -1,0 +1,101 @@
+Field name,Data type,Definition
+persid,char,Person ID number
+hhid,char,Household ID Number
+persno,int,Person number (1-x) in the residence 
+numstops,int,Number of Stops on Travel Day
+monthofbirth,char,Month of Birth
+yearofbirth,int,Year of Birth
+age,int,Age of Respondent
+sex,char,Gender
+relationship,char,Relationship to Person 1
+persinc,char,Personal income (per week)
+carlicence,char,Person holds a motor vehicle licence
+mbikelicence,char,Person holds a motorcycle licence 
+otherlicence,char,Person holds a licence for another type of vehicle
+nolicence,char,Person does not hold a motor vehicle licence
+fulltimework,char,Person works full time
+parttimework,char,Person works part time
+casualwork,char,Person is employed casually 
+anywork,char,Person works sometimes
+studying,char,Study status
+activities,char,Other Activity Status
+mainact,char,Main Activity type
+worktype,char,Work Arrangements: type of shifts
+emptype,char,Employment type
+anzsco1,char,ANZSCO Level 1 Occupation Code
+anzsco2,char,ANZSCO Level 2 Occupation Code
+anzsic1,char,ANZSIC Level 1 Industry Code
+anzsic2,char,ANZSIC Level 2 Industry Code
+startplace,char,Type of location at day start (home/other)  
+additionaltravel,char,Was an unreported trip recorded
+cycledwork,char,"Yes, Cycled to or from Work"
+cycledshopping,char,"Yes, Cycled to or from shopping"
+cycledexercise,char,"Yes, Cycled for recreation or exercise"
+cycledother,char,"Yes, Cycled for other reason(s)"
+nocycled,char,"No, did not cycle in the last 7 days"
+wdperswgt_LGA,float,"Person weight for an 'Average weekday' of the combined 2012-20 dataset, using the ASGC."
+weperswgt_LGA,float,"Person weight for an 'Average weekend day' of the combined 2012-20 dataset, using the ASGC."
+wdperswgt_SA3,Float,"Person weight for an 'Average weekday' of the combined 2012-20 dataset, using the ASGS."
+weperswgt_SA3,float,"Person weight for an 'Average weekend day' of the combined 2012-20 dataset, using the ASGS."
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,

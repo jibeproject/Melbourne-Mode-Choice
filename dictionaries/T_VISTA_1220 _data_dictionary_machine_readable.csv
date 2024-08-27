@@ -1,0 +1,100 @@
+Field name,Data type,Definition
+tripid,char,Trip ID number
+persid,char,Person ID number
+hhid,char,Household ID Number
+stops,int,Stop no. for person on the day of survey
+tripno,int,Trip number for person on the day of survey
+starthour,int,Trip start hour 
+startime,int,"Time of Starting Trip (in minutes, from midnight)"
+arrhour,int,Hour of Ending Trip (27 hr - day)
+arrtime,int,"Time of Ending Trip (in minutes, from midnight)"
+triptime,int,Total trip time (in minutes)
+travtime,int,Total time spent travelling (minus duration at stops)
+waitime,int,Total waiting time at stop between modes (in minutes)
+duration,int,Duration of Stop Activity
+cumdist,float,Total distance for trip - using VISTADIST (Network shortest path)
+origSA1,int,Trip origin – SA1 – Code
+origSA2,Int,Trip origin – SA2 – Code 
+origSA2_name,char,Trip origin – SA2 – name
+origSA3,Int,Trip origin – SA3 – Code 
+origSA3_name,char,Trip origin – SA3 – name
+origSA4,int,Trip origin – SA4 – Code 
+origSA4_name,char,Trip origin – SA4 – name
+origLGA,char,Trip origin - LGA
+origplace1,char,Origin Place Type (Summary)
+origplace2,char,Origin Place Type (Detail)
+origpurp1,char,Purpose at Start of Trip Stage (Summary)
+origpurp2,char,Purpose at Start of Trip Stage (detail)
+destSA1,int,Trip destination – SA1 – Code
+destSA2,Int,Trip destination – SA2 – Code 
+destSA2_name,char,Trip destination – SA2 – name
+destSA3,Int,Trip destination – SA3 – Code 
+destSA3_name,char,Trip destination – SA3 – name
+destSA4,int,Trip destination – SA4 – Code 
+destSA4_name,char,Trip destination – SA4 – name
+destLGA,char,Trip destination - LGA
+destpurp1,char,Purpose at End of Trip (Summary)
+destpurp2,char,Purpose at End of Trip (detailed)
+destplace1,char,Destination Place Type (Summary) 
+destplace2,char,Destination Place Type (detailed)
+trippurp,char,Purpose of the trip
+linkmode,char,Assigned as overall trip mode
+dist1,float,Travel distance for trip-stage (stop) #1 (in km)  
+dist2,float,Travel distance for trip-stage (stop) #2   
+dist3,float,Travel distance for trip-stage (stop) #3   
+dist4,float,Travel distance for trip-stage (stop) #4   
+dist5,float,Travel distance for trip-stage (stop) #5   
+dist6,float,Travel distance for trip-stage (stop) #6   
+dist7,float,Travel distance for trip-stage (stop) #7   
+dist8,float,Travel distance for trip-stage (stop) #8   
+dist9,float,Travel distance for trip-stage (stop) #9   
+dist10,float,Travel distance for trip-stage (stop) #10   
+mode1,char,Travel mode for trip-stage (stop) #1 
+mode2,char,Travel mode for trip-stage (stop) #2   
+mode3,char,Travel mode for trip-stage (stop) #3  
+mode4,char,Travel mode for trip-stage (stop) #4  
+mode5,char,Travel mode for trip-stage (stop) #5  
+mode6,char,Travel mode for trip-stage (stop) #6  
+mode7,char,Travel mode for trip-stage (stop) #7  
+mode8,char,Travel mode for trip-stage (stop) #8  
+mode9,char,Travel mode for trip-stage (stop) #9  
+mode10,char,Travel mode for trip-stage (stop) #10  
+time1,int,Travel time for trip-stage (stop) #1 (in minutes)
+time2,int,Travel time for trip-stage (stop) #2   
+time3,int,Travel time for trip-stage (stop) #3   
+time4,int,Travel time for trip-stage (stop) #4   
+time5,int,Travel time for trip-stage (stop) #5   
+time6,int,Travel time for trip-stage (stop) #6   
+time7,int,Travel time for trip-stage (stop) #7   
+time8,int,Travel time for trip-stage (stop) #8   
+time9,int,Travel time for trip-stage (stop) #9   
+time10,int,Travel time for trip-stage (stop) #10   
+wdtripwgt_SA3,float,"Trip weight for an Average day of the week of the combined 2012-20 dataset, using the ASGS."
+wetripwgt_SA3,float,"Trip weight for an Average weekend day of the combined 2012-20 dataset, using the ASGS."
+wdtripwgt_LGA,float,"Trip weight for an Average day of the week of the combined 2012-20 dataset, using the ASGC."
+wetripwgt_LGA,float,"Trip weight for an Average weekend day of the combined 2012-20 dataset, using the ASGC."
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,

@@ -15,7 +15,7 @@ To conduct the JIBE mode choice modelling for Melbourne requires data preparatio
 
 The analysis is conducted for the JIBE project by Carl Higgs in August/September 2024, in coordination with Dr Qin Zhang, Corin Staves and Dr Belen Zapata-Diomedi.
 
-It expands on an earlier mode choice analysis demonstration using the VISTA travel survey using the [Rapid Realisting Routing with R5 (r5r)](https://ipeagit.github.io/r5r/) routing engine, conducted by Carl Higgs for the JIBE project (https://github.com/carlhiggs/multimodal_analysis_example) in March 2022 on behalf of Dr Tayebeh Saghapour.  This was subsequently adapted by Dr Alan Both (https://github.com/jibeproject/odCalculationsMelbourne) for the JIBE project in February 2024.
+It expands on an [earlier mode choice analysis](https://github.com/carlhiggs/multimodal_analysis_example) demonstration using the VISTA travel survey using the [Rapid Realisting Routing with R5 (r5r)](https://ipeagit.github.io/r5r/) routing engine, conducted by Carl Higgs for the JIBE project in March 2022 on behalf of Dr Tayebeh Saghapour.  This was subsequently [adapted](https://github.com/jibeproject/odCalculationsMelbourne) by Dr Alan Both for the JIBE project in February 2024.
 
 The purpose of this analysis is to create appropriate data to inform travel demand generation using the [Microscopic Transport Orchestrator (MITO)](https://www.mos.ed.tum.de/tb/forschung/models/travel-demand/mito/) model by Dr Qin Zhang, [transport simulation modelling](https://github.com/jibeproject/matsim-jibe) by Corin Staves, and [microsimulation of downstream health impacts](https://github.com/jibeproject/health_microsim) related to mode choice and environmental exposures by Dr Belen Zapata-Diomedi, Dr Ali Abbas and Steve Pemberton.
 
@@ -24,6 +24,9 @@ A Quarto markdown document [`JIBE_Melbourne_Mode_Choice.qmd`](JIBE_Melbourne_Mod
 Code (at least at first) will draw on example code prepared by Dr Qin Zhang and Corin Staves, adapting as required for use with the VISTA travel survey.
 
 No data or data-related outputs will be included in this document or repository.  By default, output is set to False.  For non-sensitive aspects, e.g. displaying the `sessionInfo()` after running analysis, this may be over-ridden.
+
+## Status
+27 August 2024: commenced, in progress
 
 ## System environment set up
 
@@ -58,6 +61,7 @@ Trips will be classified using an a standard abbreviation schema, as advised by 
 | NHBO           | Non-home based other (e.g. from supermarket to restaurant) |
 | RRT            | Round Trip |
 
+### Read data
 ```{r}
 data <- c(
   'H_VISTA_1220_Coord.csv',

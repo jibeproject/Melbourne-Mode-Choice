@@ -1,0 +1,7 @@
+Prefix,File,Dataset,Description,StartYear,EndYear
+H,H_VISTA_1220_Coord.csv,H_VISTA_1220,Households,2012,2020
+P,P_VISTA_1220_Coord.csv,H_VISTA_1220,Persons,2012,2020
+S,S_VISTA_1220_Coord.csv,H_VISTA_1220,Stops,2012,2020
+T,T_VISTA_1220_Coord.csv,H_VISTA_1220,Trips,2012,2020
+JTW,JTW_VISTA_1220_Coord.csv,H_VISTA_1220,Journey to work,2012,2020
+JTE,JTE_VISTA_1220_Coord.csv,H_VISTA_1220,Journey to education,2012,2020

@@ -14,14 +14,14 @@ The analysis is conducted for the JIBE project by Carl Higgs in
 August/September 2024, in coordination with Dr Qin Zhang, Corin Staves
 and Dr Belen Zapata-Diomedi.
 
-It expands on an earlier mode choice analysis demonstration using the
-VISTA travel survey using the [Rapid Realisting Routing with R5
-(r5r)](https://ipeagit.github.io/r5r/) routing engine, conducted by Carl
-Higgs for the JIBE project
-(https://github.com/carlhiggs/multimodal_analysis_example) in March 2022
-on behalf of Dr Tayebeh Saghapour. This was subsequently adapted by Dr
-Alan Both (https://github.com/jibeproject/odCalculationsMelbourne) for
-the JIBE project in February 2024.
+It expands on an [earlier mode choice
+analysis](https://github.com/carlhiggs/multimodal_analysis_example)
+demonstration using the VISTA travel survey using the [Rapid Realisting
+Routing with R5 (r5r)](https://ipeagit.github.io/r5r/) routing engine,
+conducted by Carl Higgs for the JIBE project in March 2022 on behalf of
+Dr Tayebeh Saghapour. This was subsequently
+[adapted](https://github.com/jibeproject/odCalculationsMelbourne) by Dr
+Alan Both for the JIBE project in February 2024.
 
 The purpose of this analysis is to create appropriate data to inform
 travel demand generation using the [Microscopic Transport Orchestrator
@@ -48,6 +48,10 @@ No data or data-related outputs will be included in this document or
 repository. By default, output is set to False. For non-sensitive
 aspects, e.g. displaying the `sessionInfo()` after running analysis,
 this may be over-ridden.
+
+## Status
+
+27 August 2024: commenced, in progress
 
 ## System environment set up
 
@@ -85,6 +89,8 @@ advised by Dr Qin Zhang \[reference?\]
 | NHBW           | Non-home based work (e.g. from workplace to restaurant)                      |
 | NHBO           | Non-home based other (e.g. from supermarket to restaurant)                   |
 | RRT            | Round Trip                                                                   |
+
+### Read data
 
 ``` r
 data <- c(

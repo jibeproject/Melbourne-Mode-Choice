@@ -1,0 +1,100 @@
+Field name,Data type,Definition
+jteid,char,Journey to education ID
+persid,char,Person ID number
+hhid,char,Household ID Number
+starthour,int,Hour of starting journey 
+startime,int,"Time of starting journey (in minutes, from midnight) "
+arrhour,int,Hour of ending journey (27 hr - day) 
+arrtime,int,"Time of ending journey (in minutes, from midnight) "
+dephour,int,Hour Departing from journey destination (from midnight)
+deptime,int,"Time of departing from journey destination (in minutes, from midnight)"
+jtetraveltime,int,"Journey to education - travel time (excludes stops, in minutes)"
+jte_at,int,Journey to education - non-travel time (mins)
+jteelapsedtime,int,"Journey to education - total elapsed travel time (inc. stops, in minutes)"
+jtedist,float,Journey to education - distance (in km)
+origSA1,int,Journey origin – SA1 – Code
+origSA2,Int,Journey origin – SA2 – Code 
+origSA2_name,char,Journey origin – SA2 – name
+origSA3,Int,Journey origin – SA3 – Code 
+origSA3_name,char,Journey origin – SA3 – name
+origSA4,int,Journey origin – SA4 – Code 
+origSA4_name,char,Journey origin – SA4 – name
+origLGA,char,Journey origin – Local government Area 
+destSA1,int,Journey destination – SA1 – Code
+destSA2,Int,Journey destination – SA2 – Code 
+destSA2_name,char,Journey destination – SA2 – name
+destSA3,Int,Journey destination – SA3 – Code 
+destSA3_name,char,Journey destination – SA3 – name
+destSA4,int,Journey destination – SA4 – Code 
+destSA4_name,char,Journey destination – SA4 – name
+destLGA,char,Journey destination – Local government Area 
+destplace,char,Destination Place Type 
+jtemode,char,Journey to education - main mode (assigned)
+dist1,float,Travel distance for journey-stage (Stop) #1 (in km)  
+dist2,float,Travel distance for journey-stage (Stop) #2  
+dist3,float,Travel distance for journey-stage (Stop) #3    
+dist4,float,Travel distance for journey-stage (Stop) #4    
+dist5,float,Travel distance for journey-stage (Stop) #5    
+dist6,float,Travel distance for journey-stage (Stop) #6    
+dist7,float,Travel distance for journey-stage (Stop) #7    
+dist8,float,Travel distance for journey-stage (Stop) #8    
+dist9,float,Travel distance for journey-stage (Stop) #9    
+dur1,int,Duration at place #1 (in Minutes) 
+dur2,int,Duration at place #2 
+dur3,int,Duration at place #3 
+dur4,int,Duration at place #4 
+dur5,int,Duration at place #5 
+dur6,int,Duration at place #6 
+dur7,int,Duration at place #7 
+dur8,int,Duration at place #8 
+dur9,int,Duration at place #9 
+mode1,char,Travel mode for Journey-stage (stop) #1  
+mode2,char,Travel mode for Journey-stage (stop) #2    
+mode3,char,Travel mode for Journey-stage (stop) #3   
+mode4,char,Travel mode for Journey-stage (stop) #4   
+mode5,char,Travel mode for Journey-stage (stop) #5   
+mode6,char,Travel mode for Journey-stage (stop) #6   
+mode7,char,Travel mode for Journey-stage (stop) #7   
+mode8,char,Travel mode for Journey-stage (stop) #8   
+mode9,char,Travel mode for Journey-stage (stop) #9   
+place1,char,Type of destination - Journey-stage (stop) #1  
+place2,char,Type of destination - Journey-stage (stop) #2     
+place3,char,Type of destination - Journey-stage (stop) #3     
+place4,char,Type of destination - Journey-stage (stop) #4     
+place5,char,Type of destination - Journey-stage (stop) #5     
+place6,char,Type of destination - Journey-stage (stop) #6     
+place7,char,Type of destination - Journey-stage (stop) #7     
+place8,char,Type of destination - Journey-stage (stop) #8     
+place9,char,Type of destination - Journey-stage (stop) #9     
+purp1,char, Purpose - Journey-stage (stop) #1   
+purp2,char, Purpose - Journey-stage (stop) #2   
+purp3,char, Purpose - Journey-stage (stop) #3   
+purp4,char, Purpose - Journey-stage (stop) #4   
+purp5,char, Purpose - Journey-stage (stop) #5   
+purp6,char, Purpose - Journey-stage (stop) #6   
+purp7,char, Purpose - Journey-stage (stop) #7   
+purp8,char, Purpose - Journey-stage (stop) #8   
+purp9,char, Purpose - Journey-stage (stop) #9   
+stop1,char,STOP ID - Journey-stage (stop) #1   
+stop2,char,STOP ID - Journey-stage (stop) #2   
+stop3,char,STOP ID - Journey-stage (stop) #3   
+stop4,char,STOP ID - Journey-stage (stop) #4   
+stop5,char,STOP ID - Journey-stage (stop) #5   
+stop6,char,STOP ID - Journey-stage (stop) #6   
+stop7,char,STOP ID - Journey-stage (stop) #7   
+stop8,char,STOP ID - Journey-stage (stop) #8   
+stop9,char,STOP ID - Journey-stage (stop) #9   
+time1,int,Travel time for journey-stage (stop) #1 (in minutes)
+time2,int,Travel time for journey-stage (stop) #2   
+time3,int,Travel time for journey-stage (stop) #3   
+Field name,Data type,Definition
+time4,int,Travel time for journey-stage (stop) #4   
+time5,int,Travel time for journey-stage (stop) #5   
+time6,int,Travel time for journey-stage (stop) #6   
+time7,int,Travel time for journey-stage (stop) #7   
+time8,int,Travel time for journey-stage (stop) #8   
+time9,int,Travel time for journey-stage (stop) #9   
+wdjtewgt_SA3,float,"JT weight for an Average weekday of the combined 2012-20 dataset, using the ASGS."
+wejtewgt_SA3,float,"JTE weight for an Average weekend day of the combined 2012-20 dataset, using the ASGS."
+wdjtewgt_LGA,float,"JTE weight for an Average weekday of the combined 2012-20 dataset, using the ASGC."
+wejtewgt_LGA,float,"JTE weight for an Average weekend day of the combined 2012-20 dataset, using the ASGC."

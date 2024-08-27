@@ -1,0 +1,101 @@
+Field name,Data type,Definition
+hhid,char,Household ID Number
+surveyperiod,char,Year the household was surveyed
+travdow,char,Household travel day - day-of-week
+travmonth,int,Month of survey
+daytype,char,Survey day sorted into weekday or weekend day types
+dwelltype,char,Type of dwelling such as unit or house.
+owndwell,char,Dwelling ownership status
+hhsize,int,Usual number of residents in household
+hhinc,int,Household income
+visitors,int,"Visitors in household (staying overnight, day before survey)"
+aveage,int,Average age of residents in household
+youngest,int,Youngest person in household
+oldest,int,Oldest person in household
+yearslived,int,Number of years lived at the home address
+monthslived,int,Number of months lived at the home address
+adultbikes,int,Number of bicycles used by adults at address
+kidsbikes,int,Number of bicycles used by children at address
+totalbikes,int,Number of bicycles used by children at address
+cars,int,Number of cars at address
+fourwds,int,Number of four-wheel drive vehicles at address
+utes,int,Number of utility vehicles at address
+vans,int,Number of vans at address
+trucks,int,Number of trucks at address
+mbikes,int,Number of motorbikes at address
+othervehs,int,Number of other vehicles at address
+totalvehs,int,Total number of vehicles at address
+wdhhwgt_SA3,float,"Household weight for an Average weekday of the combined 2012-20 dataset, using the ASGS"
+wehhwgt_SA3,float,"Household weight for an Average weekend day of the combined 2012-20 dataset, using the ASGS"
+wdhhwgt_LGA,float,"Household weight for an Average weekday of the combined 2012-20 dataset, using the ASGC"
+wehhwgt_LGA,float,"Household weight for an Average weekend day of the combined 2012-20 dataset, using the ASGC"
+homeLGA,char,Household location - Local Government Area 
+Homesubregion_ASGC,char,"Household location sorted into subregions (using ASGC) – i.e Geelong LGA plus Inner, Middle and Outer Melbourne and Other."
+Homeregion_ASGC,char,"Household location sorted into MSD (31 LGAs), Geelong LGA and Other."
+homeSA1,int,Household location – Statistical Area 1 (SA1) – ABS Code 
+homeSA2,int,Household location – Statistical Area 1 (SA2) – ABS Code
+homeSA2_name,char,Household location – Statistical Area 1 (SA2) – name.
+homeSA3,int,Household location – Statistical Area 1 (SA3) – ABS Code
+homeSA3_name,char,Household location – Statistical Area 1 (SA2) – name.
+homeSA4,int,Household location – Statistical Area 1 (SA4) – ABS Code
+homeSA4_name,char,Household location – Statistical Area 1 (SA2) – name.
+homesubregion_ASGS,char,"Household location – sorted into subregions (using ASGS) – i.e Geelong SA4 plus Inner, Middle and Outer Melbourne and Other – name."
+homeregion_ASGS,char,Household location – sorted into Melbourne Greater Capital City Area (30 SA3s) and Geelong SA4 (3 SA3s) and Other – name.
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,

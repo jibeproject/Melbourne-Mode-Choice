@@ -1,0 +1,101 @@
+Field name,Data type,Definition
+stopid,char,Stop ID number
+persid,char,Person ID number
+hhid,char,Household ID Number
+stopno,int,Stop Number
+starthour,int,Hour of Starting Trip Stage
+startime,int ,"Time of Starting Trip Stage (in minutes, from midnight)"
+arrhour,int,Hour of Ending Trip Stage (27 hr - day)
+arrtime,int,"Time of Ending Trip Stage (in minutes, from midnight)"
+duration,int,Duration of Stop Activity (mins)
+dephour,int,Hour of Departing from Stop Location
+deptime,int,"Time of Departing from Stop Location (in minutes, from midnight)"
+travtime,int,Travel Time for Trip Stage (minutes)
+vistadist,float,"Network shortest path, using map files"
+origplace1,char,Origin Place Type (Summary)
+origplace2,char,Origin Place Type (Detail)
+origpurp1,char,Origin Purpose (Summary)
+origpurp2,char,Purpose at Start of Trip Stage (detail)
+origsa1,int,Stop origin – SA1 – Code
+origsa2,Int,Stop origin – SA2 – Code 
+origsa2_name,char,Stop origin – SA2 – name
+origsa3,Int,Stop origin – SA3 – Code 
+origsa3_name,char,Stop origin – SA3 – name
+origsa4,int,Stop origin – SA4 – Code 
+origsa4_name,char,Stop origin – SA4 – name
+origLGA,char,Stop origin - LGA
+destplace1,char,Destination Place Type (Summary) 
+destplace2,char,Destination Place Type (detailed)
+destpurp1,char,Destination Purpose (Summary)
+destpurp2,char,Purpose at End of Trip Stage (detailed)
+destsa1,int,Stop destination – SA1 – Code
+destsa2,Int,Stop destination – SA2 – Code 
+destsa2_name,char,Stop destination – SA2 – name
+destsa3,Int,Stop destination – SA3 – Code 
+destsa3_name,char,Stop destination – SA3 – name
+destsa4,int,Stop destination – SA4 – Code 
+destsa4_name,char,Stop destination – SA4 – name
+destLGA,char,Stop destination - LGA
+fullmode,char,Full Details of Mode of Travel
+mainmode,char,Summary Details of Mode of Travel
+person1,char,Person 1 from Household Accompanying  
+person2,char,Person 2 from Household Accompanying 
+person3,char,Person 3 from Household Accompanying 
+person4,char,Person 4 from Household Accompanying 
+person5,char,Person 5 from Household Accompanying 
+person6,char,Person 6 from Household Accompanying 
+person7,char,Person 7 from Household Accompanying 
+person8,char,Person 8 from Household Accompanying 
+person9,char,Person 9 from Household Accompanying 
+person10,char,Person 10 from Household Accompanying 
+person11,char,Person 11 from Household Accompanying 
+wdstopwgt_SA3,float,"Stop weight for an 'Average weekday’ of the combined 2012-20 dataset, using the ASGS."
+westopwgt_SA3,float,"Stop weight for an 'Average weekend day' of the combined 2012-20 dataset, using the ASGS."
+wdstopwgt_LGA,float,"Stop weight for an 'Average weekday’ of the combined 2012-20 dataset, using the ASGC."
+westopwgt_LGA,float,"Stop weight for an 'Average weekend day' of the combined 2012-20 dataset, using the ASGC."
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
+,,
