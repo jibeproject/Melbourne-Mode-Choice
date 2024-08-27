@@ -60,3 +60,8 @@ this may be over-ridden.
 ## Contributors
 
 Carl Higgs, Qin Zhang, Corin Staves, Belen Zapata-Diomedi
+
+
+[^1]: Victorian Government Department of Transport. 2022. Victorian
+    Integrated Survey of Travel and Activity 2012-2020.
+    https://www.vic.gov.au/victorian-integrated-survey-travel-and-activity
