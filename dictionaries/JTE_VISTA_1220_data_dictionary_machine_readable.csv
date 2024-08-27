@@ -87,7 +87,6 @@ stop9,char,STOP ID - Journey-stage (stop) #9   
 time1,int,Travel time for journey-stage (stop) #1 (in minutes)
 time2,int,Travel time for journey-stage (stop) #2   
 time3,int,Travel time for journey-stage (stop) #3   
-Field name,Data type,Definition
 time4,int,Travel time for journey-stage (stop) #4   
 time5,int,Travel time for journey-stage (stop) #5   
 time6,int,Travel time for journey-stage (stop) #6   
