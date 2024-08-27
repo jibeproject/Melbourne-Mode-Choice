@@ -1,6 +1,9 @@
 ---
 title: "JIBE Melbourne Mode Choice Preparation and Analysis"
 format: gfm
+knitr:
+  opts_chunk: 
+    collapse: true
 ---
 
 ## Background
@@ -13,10 +16,25 @@ It expands on an earlier mode choice analysis demonstration using the VISTA trav
 
 The purpose of this analysis is to create appropriate data to inform travel demand generation using the [Microscopic Transport Orchestrator (MITO)](https://www.mos.ed.tum.de/tb/forschung/models/travel-demand/mito/) model by Dr Qin Zhang, [transport simulation modelling](https://github.com/jibeproject/matsim-jibe) by Corin Staves, and [microsimulation of downstream health impacts](https://github.com/jibeproject/health_microsim) related to mode choice and environmental exposures by Dr Belen Zapata-Diomedi, Dr Ali Abbas and Steve Pemberton.
 
-## System information
-The following information records the version of R used for this analysis:
+A Quarto markdown document [`JIBE_Melbourne_Mode_Choice.qmd`](JIBE_Melbourne_Mode_Choice.qmd) will be used to document the analysis and updated as the project progresses.  This shall also be rendered as a GitHub-Flavoured-Markdown document [`JIBE_Melbourne_Mode_Choice.md`](JIBE_Melbourne_Mode_Choice.md) for convenient online viewing.
+
+Code (at least at first) will draw on example code prepared by Dr Qin Zhang and Corin Staves, adapting as required for use with the VISTA travel survey.
+
+## System environment set up
+
 ```{r}
-version
+rm(list = ls()) # clear memory
+```
+
+Project dependencies are describe in the [`renv.lock`](./renv.lock) file; see [renv](https://rstudio.github.io/renv/) for more information.  Instructions on installing dependencies using an `renv` lock file are [here](https://rstudio.github.io/renv/articles/renv.html#installing-packages).
+
+```{r}
+library(conflicted) # to explicitly handle Tidyverse conflicts https://stackoverflow.com/a/75058976
+library(tidyverse)
+library(fastDummies)
+
+conflict_prefer("filter", "dplyr")
+conflict_prefer("lag", "dplyr")
 ```
 
 ## Classification of trips
@@ -34,6 +52,19 @@ Trips will be classified using an a standard abbreviation schema, as advised by 
 | NHBW           | Non-home based work (e.g. from workplace to restaurant) |
 | NHBO           | Non-home based other (e.g. from supermarket to restaurant) |
 | RRT            | Round Trip |
+
+```{r}
+# TO DO: INSERT ANALYSIS HERE!
+```
+
+
+## System information for the above analysis
+
+The following information records the version of R used for this analysis:
+```{r}
+sessionInfo()
+```
+
 
 
 [^1]: Victorian Government Department of Transport. 2022. Victorian Integrated Survey of Travel and Activity 2012-2020. https://www.vic.gov.au/victorian-integrated-survey-travel-and-activity
