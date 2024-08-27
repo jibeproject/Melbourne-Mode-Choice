@@ -47,7 +47,7 @@ conflict_prefer("lag", "dplyr")
 
 ## Classification of trips
 
-Trips will be classified using an a standard abbreviation schema, as advised by Dr Qin Zhang [reference?]
+Trips will be classified using a standard abbreviation schema, as advised by Dr Qin Zhang [reference?]
 
 | Classification | Description |
 |:---------------|:------------|
@@ -77,6 +77,22 @@ for (d in data) {
 }
 survey
 ```
+
+### Check data
+```{r}
+# Person identifier must be unique (it is)
+stopifnot(!any(duplicated(survey$P$persid)))
+
+# Trip identifier must be unique (it is not)
+table(duplicated(survey$T$tripid))
+
+# Make Trip identifier unique
+survey$T <- survey$T %>% unite("trip.ID",c("persid","tripid"), sep = '', na.rm = TRUE, remove = FALSE)%>% relocate(trip.ID, .after = tripid)
+
+# Derived trip identifier must be unique (it is not!!!)
+table(duplicated(survey$T$trip.ID))
+```
+## MORE ANALYSIS TO FOLLOW; THIS IS NOT COMPLETE
 
 
 ## System information for the above analysis
