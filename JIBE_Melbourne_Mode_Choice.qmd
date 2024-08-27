@@ -1,6 +1,9 @@
 ---
 title: "JIBE Melbourne Mode Choice Preparation and Analysis"
 format: gfm
+execute:
+  # no data is to be included in this document, unless intentionally over-ridden
+  output: false 
 knitr:
   opts_chunk: 
     collapse: true
@@ -19,6 +22,8 @@ The purpose of this analysis is to create appropriate data to inform travel dema
 A Quarto markdown document [`JIBE_Melbourne_Mode_Choice.qmd`](JIBE_Melbourne_Mode_Choice.qmd) will be used to document the analysis and updated as the project progresses.  This shall also be rendered as a GitHub-Flavoured-Markdown document [`JIBE_Melbourne_Mode_Choice.md`](JIBE_Melbourne_Mode_Choice.md) for convenient online viewing.
 
 Code (at least at first) will draw on example code prepared by Dr Qin Zhang and Corin Staves, adapting as required for use with the VISTA travel survey.
+
+No data or data-related outputs will be included in this document or repository.  By default, output is set to False.  For non-sensitive aspects, e.g. displaying the `sessionInfo()` after running analysis, this may be over-ridden.
 
 ## System environment set up
 
@@ -54,7 +59,19 @@ Trips will be classified using an a standard abbreviation schema, as advised by 
 | RRT            | Round Trip |
 
 ```{r}
-# TO DO: INSERT ANALYSIS HERE!
+data <- c(
+  'H_VISTA_1220_Coord.csv',
+  'JTE_VISTA_1220_Coord.csv',
+  'JTW_VISTA_1220_Coord.csv',
+  'P_VISTA_1220_Coord.csv',
+  'S_VISTA_1220_Coord.csv',
+  'T_VISTA_1220_Coord.csv'
+)
+survey<-list()
+for (d in data) {
+  survey[[sapply(strsplit(d,split='_',1),`[`,1)]]<-read_csv(glue::glue('../../{d}'))
+}
+survey
 ```
 
 
@@ -62,6 +79,7 @@ Trips will be classified using an a standard abbreviation schema, as advised by 
 
 The following information records the version of R used for this analysis:
 ```{r}
+#| output: true
 sessionInfo()
 ```
 

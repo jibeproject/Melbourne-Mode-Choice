@@ -44,6 +44,11 @@ Code (at least at first) will draw on example code prepared by Dr Qin
 Zhang and Corin Staves, adapting as required for use with the VISTA
 travel survey.
 
+No data or data-related outputs will be included in this document or
+repository. By default, output is set to False. For non-sensitive
+aspects, e.g. displaying the `sessionInfo()` after running analysis,
+this may be over-ridden.
+
 ## System environment set up
 
 ``` r
@@ -58,18 +63,10 @@ Instructions on installing dependencies using an `renv` lock file are
 ``` r
 library(conflicted) # to explicitly handle Tidyverse conflicts https://stackoverflow.com/a/75058976
 library(tidyverse)
-## ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
-## ✔ dplyr     1.1.4     ✔ readr     2.1.5
-## ✔ forcats   1.0.0     ✔ stringr   1.5.1
-## ✔ ggplot2   3.5.1     ✔ tibble    3.2.1
-## ✔ lubridate 1.9.3     ✔ tidyr     1.3.1
-## ✔ purrr     1.0.2
 library(fastDummies)
 
 conflict_prefer("filter", "dplyr")
-## [conflicted] Will prefer dplyr::filter over any other package.
 conflict_prefer("lag", "dplyr")
-## [conflicted] Will prefer dplyr::lag over any other package.
 ```
 
 ## Classification of trips
@@ -90,7 +87,19 @@ advised by Dr Qin Zhang \[reference?\]
 | RRT            | Round Trip                                                                   |
 
 ``` r
-# TO DO: INSERT ANALYSIS HERE!
+data <- c(
+  'H_VISTA_1220_Coord.csv',
+  'JTE_VISTA_1220_Coord.csv',
+  'JTW_VISTA_1220_Coord.csv',
+  'P_VISTA_1220_Coord.csv',
+  'S_VISTA_1220_Coord.csv',
+  'T_VISTA_1220_Coord.csv'
+)
+survey<-list()
+for (d in data) {
+  survey[[sapply(strsplit(d,split='_',1),`[`,1)]]<-read_csv(glue::glue('../../{d}'))
+}
+survey
 ```
 
 ## System information for the above analysis
@@ -124,16 +133,17 @@ sessionInfo()
 ##  [9] tibble_3.2.1      ggplot2_3.5.1     tidyverse_2.0.0   conflicted_1.2.0 
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] gtable_0.3.5      jsonlite_1.8.8    compiler_4.4.1    renv_1.0.7       
-##  [5] tidyselect_1.2.1  scales_1.3.0      yaml_2.3.10       fastmap_1.2.0    
-##  [9] R6_2.5.1          generics_0.1.3    knitr_1.48        munsell_0.5.1    
-## [13] pillar_1.9.0      tzdb_0.4.0        rlang_1.1.4       utf8_1.2.4       
-## [17] stringi_1.8.4     cachem_1.1.0      xfun_0.47         timechange_0.3.0 
-## [21] memoise_2.0.1     cli_3.6.3         withr_3.0.1       magrittr_2.0.3   
-## [25] digest_0.6.37     grid_4.4.1        rstudioapi_0.16.0 hms_1.1.3        
-## [29] lifecycle_1.0.4   vctrs_0.6.5       evaluate_0.24.0   glue_1.7.0       
-## [33] fansi_1.0.6       colorspace_2.1-1  rmarkdown_2.28    tools_4.4.1      
-## [37] pkgconfig_2.0.3   htmltools_0.5.8.1
+##  [1] bit_4.0.5         gtable_0.3.5      jsonlite_1.8.8    crayon_1.5.3     
+##  [5] compiler_4.4.1    renv_1.0.7        tidyselect_1.2.1  parallel_4.4.1   
+##  [9] scales_1.3.0      yaml_2.3.10       fastmap_1.2.0     R6_2.5.1         
+## [13] generics_0.1.3    knitr_1.48        munsell_0.5.1     pillar_1.9.0     
+## [17] tzdb_0.4.0        rlang_1.1.4       utf8_1.2.4        stringi_1.8.4    
+## [21] cachem_1.1.0      xfun_0.47         bit64_4.0.5       timechange_0.3.0 
+## [25] memoise_2.0.1     cli_3.6.3         withr_3.0.1       magrittr_2.0.3   
+## [29] digest_0.6.37     grid_4.4.1        vroom_1.6.5       rstudioapi_0.16.0
+## [33] hms_1.1.3         lifecycle_1.0.4   vctrs_0.6.5       evaluate_0.24.0  
+## [37] glue_1.7.0        fansi_1.0.6       colorspace_2.1-1  rmarkdown_2.28   
+## [41] tools_4.4.1       pkgconfig_2.0.3   htmltools_0.5.8.1
 ```
 
 [^1]: Victorian Government Department of Transport. 2022. Victorian
