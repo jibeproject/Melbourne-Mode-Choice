@@ -76,7 +76,7 @@ conflict_prefer("lag", "dplyr")
 ## Classification of trips
 
 Trips will be classified using a standard abbreviation schema, as
-advised by Dr Qin Zhang \[reference?\]
+advised by Dr Qin Zhang and Corin Staves [^2] [^3] [^4]
 
 | Classification | Description                                                                  |
 |:---------------|:-----------------------------------------------------------------------------|
@@ -103,7 +103,7 @@ data <- c(
 )
 survey<-list()
 for (d in data) {
-  survey[[sapply(strsplit(d,split='_',1),`[`,1)]]<-read_csv(glue::glue('../../{d}'))
+  survey[[sapply(strsplit(d,split='_',1),`[`,1)]]<-read_csv(glue::glue('../../{d}')) 
 }
 survey
 ```
@@ -111,17 +111,24 @@ survey
 ### Check data
 
 ``` r
-# Person identifier must be unique (it is)
+# Person identifier must be unique (it is; there are 82,118 unique persons)
 stopifnot(!any(duplicated(survey$P$persid)))
 
 # Trip identifier must be unique (it is not)
 table(duplicated(survey$T$tripid))
 
-# Make Trip identifier unique
-survey$T <- survey$T %>% unite("trip.ID",c("persid","tripid"), sep = '', na.rm = TRUE, remove = FALSE)%>% relocate(trip.ID, .after = tripid)
+# Look at duplicate tripids (4,104 are NA)
+survey$T[duplicated(survey$T$tripid),]
 
-# Derived trip identifier must be unique (it is not!!!)
-table(duplicated(survey$T$trip.ID))
+# I visually checked the CSV file and confirmed that these rows just consist of commas
+# This can occur if someone exports a CSV from Excel that inadvertently includes blank rows
+# I am surprised that the read csv default 'skip_empty_rows = TRUE' did not deal with this.
+
+# Omit NA tripid rows from tripid dataset
+survey$T <- survey$T %>% filter(!sapply(tripid, is.na))
+
+# Trip id must be unique  (now, it is; there are 221,819 unique trips)
+stopifnot(!any(duplicated(survey$T$tripid)))
 ```
 
 ## MORE ANALYSIS TO FOLLOW; THIS IS NOT COMPLETE
@@ -173,3 +180,13 @@ sessionInfo()
 [^1]: Victorian Government Department of Transport. 2022. Victorian
     Integrated Survey of Travel and Activity 2012-2020.
     https://www.vic.gov.au/victorian-integrated-survey-travel-and-activity
+
+[^2]: Ortúzar JdD and Willumsen LG (2011) Modelling Transport.
+    Chichester: John Wiley & Sons, Ltd
+
+[^3]: Staves, Corin. (2020). Physical Activity Assessment and Modelling
+    using Household Travel Surveys. 10.13140/RG.2.2.14307.84009.
+
+[^4]: Staves C, Zhang Q, Moeckel R, et al. (2023) Integrating health
+    effects within an agent-based land use and transport model. J Transp
+    Health 33: 101707.
