@@ -90,6 +90,8 @@ advised by Dr Qin Zhang and Corin Staves [^2] [^3] [^4]
 | NHBO           | Non-home based other (e.g. from supermarket to restaurant)                   |
 | RRT            | Round Trip                                                                   |
 
+## Data preparation
+
 ### Read data
 
 ``` r
@@ -108,13 +110,14 @@ for (d in data) {
 survey
 ```
 
-### Check data
+### Check data, ensuring that dataset IDs are unique
 
 ``` r
-# Person identifier must be unique (it is; there are 82,118 unique persons)
+# Person identifier must uniquely identify persons (it does; there are 82,118 unique persons)
+table(duplicated(survey$P$persid))
 stopifnot(!any(duplicated(survey$P$persid)))
 
-# Trip identifier must be unique (it is not)
+# Trip identifier must uniquely identify trips (it does not)
 table(duplicated(survey$T$tripid))
 
 # Look at duplicate tripids (4,104 are NA)
@@ -129,7 +132,91 @@ survey$T <- survey$T %>% filter(!sapply(tripid, is.na))
 
 # Trip id must be unique  (now, it is; there are 221,819 unique trips)
 stopifnot(!any(duplicated(survey$T$tripid)))
+
+# Household ID must uniquely identify households (it does; there are 32,133 households)
+table(duplicated(survey$H$hhid))
+stopifnot(!any(duplicated(survey$H$hhid)))
 ```
+
+### Merge data on trips, persons and households
+
+Left joining households to persons, and left joining that to the trip
+dataset so we have trips\>persons\>households, respectively joined using
+their unique identifiers.
+
+``` r
+trips <- survey$T %>% left_join(survey$P  %>% left_join(survey$H, by='hhid'), by='persid')
+```
+
+### List columns present in the merged Trip dataset
+
+``` r
+trips %>% colnames()
+##   [1] "tripid"             "persid"             "hhid.x"            
+##   [4] "stops"              "tripno"             "starthour"         
+##   [7] "startime"           "arrhour"            "arrtime"           
+##  [10] "triptime"           "travtime"           "waitime"           
+##  [13] "duration"           "cumdist"            "origplace1"        
+##  [16] "origplace2"         "origpurp1"          "origpurp2"         
+##  [19] "destplace1"         "destplace2"         "destpurp1"         
+##  [22] "destpurp2"          "origsa1"            "origsa2"           
+##  [25] "origsa2_name"       "origsa3"            "origsa3_name"      
+##  [28] "origsa4"            "origsa4_name"       "origlga"           
+##  [31] "destsa1"            "destsa2"            "destsa2_name"      
+##  [34] "destsa3"            "destsa3_name"       "destsa4"           
+##  [37] "destsa4_name"       "destlga"            "trippurp"          
+##  [40] "linkmode"           "dist1"              "dist2"             
+##  [43] "dist3"              "dist4"              "dist5"             
+##  [46] "dist6"              "dist7"              "dist8"             
+##  [49] "dist9"              "dist10"             "mode1"             
+##  [52] "mode2"              "mode3"              "mode4"             
+##  [55] "mode5"              "mode6"              "mode7"             
+##  [58] "mode8"              "mode9"              "mode10"            
+##  [61] "time1"              "time2"              "time3"             
+##  [64] "time4"              "time5"              "time6"             
+##  [67] "time7"              "time8"              "time9"             
+##  [70] "time10"             "wdtripwgt_sa3"      "wetripwgt_sa3"     
+##  [73] "wdtripwgt_lga"      "wetripwgt_lga"      "origmb"            
+##  [76] "origlat"            "origlong"           "destmb"            
+##  [79] "destlat"            "destlong"           "hhid.y"            
+##  [82] "persno"             "numstops"           "monthofbirth"      
+##  [85] "yearofbirth"        "age"                "sex"               
+##  [88] "relationship"       "persinc"            "carlicence"        
+##  [91] "mbikelicence"       "otherlicence"       "nolicence"         
+##  [94] "fulltimework"       "parttimework"       "casualwork"        
+##  [97] "anywork"            "studying"           "activities"        
+## [100] "mainact"            "worktype"           "emptype"           
+## [103] "anzsco1"            "anzsco2"            "anzsic1"           
+## [106] "anzsic2"            "startplace"         "additionaltravel"  
+## [109] "cycledwork"         "cycledshopping"     "cycledexercise"    
+## [112] "cycledother"        "nocycled"           "wdperswgt_sa3"     
+## [115] "weperswgt_sa3"      "wdperswgt_lga"      "weperswgt_lga"     
+## [118] "surveyperiod"       "travdow"            "travmonth"         
+## [121] "daytype"            "owndwell"           "hhsize"            
+## [124] "hhinc"              "visitors"           "aveage"            
+## [127] "youngest"           "oldest"             "yearslived"        
+## [130] "monthslived"        "adultbikes"         "kidsbikes"         
+## [133] "totalbikes"         "cars"               "fourwds"           
+## [136] "utes"               "vans"               "trucks"            
+## [139] "mbikes"             "othervehs"          "totalvehs"         
+## [142] "wdhhwgt_sa3"        "wehhwgt_sa3"        "wdhhwgt_lga"       
+## [145] "wehhwgt_lga"        "homesa1"            "homesa2"           
+## [148] "homesa2_name"       "homesa3"            "homesa3_name"      
+## [151] "homesa4"            "homesa4_name"       "homelga"           
+## [154] "homesubregion_asgc" "homeregion_asgc"    "homesubregion_asgs"
+## [157] "homeregion_asgs"    "homepc"             "homemb"            
+## [160] "centroid_long"      "centroid_lat"
+```
+
+## Assign trip purpose
+
+## Attach travel time
+
+## Filter out invalid trips records
+
+## Deal with intrazonal trips
+
+## Write to CSV
 
 ## MORE ANALYSIS TO FOLLOW; THIS IS NOT COMPLETE
 

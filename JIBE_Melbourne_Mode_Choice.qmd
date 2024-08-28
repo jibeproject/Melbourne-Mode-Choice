@@ -61,6 +61,7 @@ Trips will be classified using a standard abbreviation schema, as advised by Dr 
 | NHBO           | Non-home based other (e.g. from supermarket to restaurant) |
 | RRT            | Round Trip |
 
+## Data preparation
 ### Read data
 ```{r}
 data <- c(
@@ -78,12 +79,13 @@ for (d in data) {
 survey
 ```
 
-### Check data
+### Check data, ensuring that dataset IDs are unique
 ```{r}
-# Person identifier must be unique (it is; there are 82,118 unique persons)
+# Person identifier must uniquely identify persons (it does; there are 82,118 unique persons)
+table(duplicated(survey$P$persid))
 stopifnot(!any(duplicated(survey$P$persid)))
 
-# Trip identifier must be unique (it is not)
+# Trip identifier must uniquely identify trips (it does not)
 table(duplicated(survey$T$tripid))
 
 # Look at duplicate tripids (4,104 are NA)
@@ -98,8 +100,42 @@ survey$T <- survey$T %>% filter(!sapply(tripid, is.na))
 
 # Trip id must be unique  (now, it is; there are 221,819 unique trips)
 stopifnot(!any(duplicated(survey$T$tripid)))
+
+# Household ID must uniquely identify households (it does; there are 32,133 households)
+table(duplicated(survey$H$hhid))
+stopifnot(!any(duplicated(survey$H$hhid)))
 ```
+
+### Merge data on trips, persons and households
+Left joining households to persons, and left joining that to the trip dataset so we have trips>persons>households, respectively joined using their unique identifiers.
+
+```{r}
+trips <- survey$T %>% left_join(survey$P  %>% left_join(survey$H, by='hhid'), by='persid')
+```
+
+### List columns present in the merged Trip dataset
+
+```{r}
+#| output: true
+trips %>% colnames()
+```
+
+## Assign trip purpose
+
+## Attach travel time 
+
+## Filter out invalid trips records 
+
+## Deal with intrazonal trips
+For Manchester there were a substantial number of intrazonal trips, having origin and destination are recorded with the same output area (OA).
+
+For Melbourne, we need to check if intrazonal trips exist, sharing identical origin and destination coordinates.
+
+## Write to CSV
+
 ## MORE ANALYSIS TO FOLLOW; THIS IS NOT COMPLETE
+
+
 
 
 ## System information for the above analysis
