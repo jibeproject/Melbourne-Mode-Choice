@@ -357,7 +357,7 @@ places<- full_join(
   trips$origplace1%>%replace_na('NA')%>%table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Place','Origins (n)')),
   trips$destplace1%>%replace_na('NA')%>%table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Place','Destinations (n)'))
   )%>%adorn_totals()
-kable(places)
+kable(places %>% replace(is.na(.), 0)) # NA counts are really zeroes
 ```
 
 | Place                      | Origins (n) | Destinations (n) |
@@ -382,12 +382,12 @@ purpose<- full_join(
   trips$origpurp1%>%replace_na('NA')%>%table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Purpose','Start (n)')),
   trips$destpurp1%>%replace_na('NA')%>%table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Purpose','End (n)'))
   )%>%adorn_totals()
-kable(purpose)
+kable(purpose %>% replace(is.na(.), 0)) # NA counts are really zeroes
 ```
 
 | Purpose                           | Start (n) | End (n) |
 |:----------------------------------|----------:|--------:|
-| At Home                           |     87031 |      NA |
+| At Home                           |     87031 |       0 |
 | Work Related                      |     28466 |   28486 |
 | Buy Something                     |     23742 |   23748 |
 | Social                            |     22758 |   22950 |
@@ -397,11 +397,11 @@ kable(purpose)
 | Education                         |      8344 |    8365 |
 | Accompany Someone                 |      7623 |    7725 |
 | Pick-up or Deliver Something      |      3120 |    3122 |
-| Unknown Purpose (at start of day) |      1832 |      NA |
+| Unknown Purpose (at start of day) |      1832 |       0 |
 | Other Purpose                     |       998 |     697 |
 | Change Mode                       |        12 |     142 |
 | Not Stated                        |         4 |       4 |
-| At or Go Home                     |        NA |   86905 |
+| At or Go Home                     |         0 |   86905 |
 | Total                             |    221819 |  221819 |
 
 We have now imputed values for the NA places and purposes.

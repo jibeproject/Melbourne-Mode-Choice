@@ -200,7 +200,7 @@ places<- full_join(
   trips$origplace1%>%replace_na('NA')%>%table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Place','Origins (n)')),
   trips$destplace1%>%replace_na('NA')%>%table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Place','Destinations (n)'))
   )%>%adorn_totals()
-kable(places)
+kable(places %>% replace(is.na(.), 0)) # NA counts are really zeroes
 ```
 
 Revised purposes, following cleaning:
@@ -212,7 +212,7 @@ purpose<- full_join(
   trips$origpurp1%>%replace_na('NA')%>%table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Purpose','Start (n)')),
   trips$destpurp1%>%replace_na('NA')%>%table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Purpose','End (n)'))
   )%>%adorn_totals()
-kable(purpose)
+kable(purpose %>% replace(is.na(.), 0)) # NA counts are really zeroes
 ```
 
 We have now imputed values for the NA places and purposes.
