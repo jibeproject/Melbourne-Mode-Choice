@@ -66,6 +66,7 @@ Instructions on installing dependencies using an `renv` lock file are
 
 ``` r
 library(conflicted) # package conflict handling https://stackoverflow.com/a/75058976
+library(janitor) # data cleaning
 library(knitr) # presentation
 library(tidyverse) # data handling
 library(fastDummies) # binary dummy variable utility
@@ -226,9 +227,9 @@ required for any downstream analyses.
 
 ``` r
 places<- full_join(
-  survey$T$origplace1%>%replace_na('NA')%>%table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Place','Origins (n)')),
-  survey$T$destplace1%>%replace_na('NA')%>%table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Place','Destinations (n)'))
-  )
+  trips$origplace1%>%replace_na('NA')%>%table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Place','Origins (n)')),
+  trips$destplace1%>%replace_na('NA')%>%table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Place','Destinations (n)'))
+  )%>%adorn_totals()
 kable(places)
 ```
 
@@ -246,6 +247,7 @@ kable(places)
 | Transport Feature          |        2289 |             2436 |
 | NA                         |           1 |               NA |
 | Not Stated                 |           1 |                1 |
+| Total                      |      221819 |           221819 |
 
 In the above, ‘Accommodation’ may be thought of as ‘Home’.
 
@@ -253,7 +255,7 @@ There was one trip record missing an origin category (`origplace1` and
 `origplace2` both as NA), with destination of Accommodation (i.e. home).
 
 ``` r
- survey$T[is.na(survey$T$origplace1),][c('origplace1','destplace1','origpurp1','destpurp1')]
+ trips[is.na(trips$origplace1),][c('origplace1','destplace1','origpurp1','destpurp1')]
 ```
 
 There were coordinates recorded for this record (manual check), and the
@@ -276,9 +278,9 @@ purposes:
 
 ``` r
 purpose<- full_join(
-  survey$T$origpurp1%>%replace_na('NA')%>%table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Purpose','Start (n)')),
-  survey$T$destpurp1%>%replace_na('NA')%>%table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Purpose','End (n)'))
-  )
+  trips$origpurp1%>%replace_na('NA')%>%table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Purpose','Start (n)')),
+  trips$destpurp1%>%replace_na('NA')%>%table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Purpose','End (n)'))
+  )%>%adorn_totals()
 kable(purpose)
 ```
 
@@ -300,20 +302,21 @@ kable(purpose)
 | Not Stated                        |         4 |       4 |
 | NA                                |         1 |       1 |
 | At or Go Home                     |        NA |   86905 |
+| Total                             |    221819 |  221819 |
 
 There were recorded instances of NA for one origin and one destination
 trip purpose.
 
 ``` r
-survey$T[is.na(survey$T$origpurp1)|is.na(survey$T$destpurp1),][c('origplace1','destplace1','origpurp1','destpurp1')]
+trips[is.na(trips$origpurp1)|is.na(trips$destpurp1),][c('origplace1','destplace1','origpurp1','destpurp1')]
 ```
 
 One of these had a recorded origin of ‘Transport Feature’ (purpose: to
 ‘Pick-up or Drop-off Someone’) with destination of Workplace (purpose:
-NA). Arguably if you’re going into work, that’s a work trip. Perhaps
-there are grey areas (e.g. its your day off and you’re picking up the
-sandwich you left in the fridge), but it would be consistent with TRADS
-to interpret this as a ‘Non-Home Based Work Trip’.
+NA). Arguably if you’re going into work, that’s a work-related trip.
+Perhaps there are grey areas (e.g. its your day off and you’re picking
+up the sandwich you left in the fridge), but it would be consistent with
+TRADS to interpret this as a ‘Non-Home Based Work Trip’.
 
 The other is similar: from Workplace (purpose NA) to Place of Education
 (purpose: Education). That’s a ‘Non-home based work’ trip’ (there isn’t
@@ -324,6 +327,110 @@ the choice is easy).
 in the TRADS example, or do we adapt the given VISTA purposes (and
 perhaps, just the destination purpose as that’s really the reason for
 the trip)?*
+
+For now, I think I will derive a MITO purpose using origin, destination
+and destination purpose. We can always revise the classification
+mapping.
+
+### Further trip cleaning prior to assignment, based on above review
+
+To ensure proper coding, `origplace1` will be recorded as work related
+(**for now, pending review with colleagues**)
+
+``` r
+trips[is.na(trips$origplace1) & trips$origpurp1=='Work Related','origplace1'] <- 'Workplace'
+```
+
+Also, for now we will replace these respective NA values as ‘workplace’
+(will run this past colleagues later for thoughts on this) to ensure we
+have the appropriate fields in order to categorise as NHBW, later.
+
+``` r
+trips[is.na(trips$destpurp1) & trips$destplace1=='Workplace','destpurp1'] <- 'Work Related'
+trips[is.na(trips$origpurp1) & trips$origplace1=='Workplace','origpurp1'] <- 'Work Related'
+```
+
+Revised origin and destinations, following cleaning:
+
+``` r
+places<- full_join(
+  trips$origplace1%>%replace_na('NA')%>%table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Place','Origins (n)')),
+  trips$destplace1%>%replace_na('NA')%>%table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Place','Destinations (n)'))
+  )%>%adorn_totals()
+kable(places)
+```
+
+| Place                      | Origins (n) | Destinations (n) |
+|:---------------------------|------------:|-----------------:|
+| Accommodation              |      101767 |           103321 |
+| Shops                      |       28722 |            28742 |
+| Workplace                  |       27809 |            27450 |
+| Place of Education         |       20481 |            20609 |
+| Social Place               |       12442 |            12468 |
+| Recreational Place         |       12333 |            12380 |
+| Place of Personal Business |        8299 |             8350 |
+| Natural Feature            |        4320 |             4440 |
+| Other                      |        3356 |             1622 |
+| Transport Feature          |        2289 |             2436 |
+| Not Stated                 |           1 |                1 |
+| Total                      |      221819 |           221819 |
+
+Revised purposes, following cleaning:
+
+``` r
+purpose<- full_join(
+  trips$origpurp1%>%replace_na('NA')%>%table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Purpose','Start (n)')),
+  trips$destpurp1%>%replace_na('NA')%>%table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Purpose','End (n)'))
+  )%>%adorn_totals()
+kable(purpose)
+```
+
+| Purpose                           | Start (n) | End (n) |
+|:----------------------------------|----------:|--------:|
+| At Home                           |     87031 |      NA |
+| Work Related                      |     28466 |   28486 |
+| Buy Something                     |     23742 |   23748 |
+| Social                            |     22758 |   22950 |
+| Pick-up or Drop-off Someone       |     15347 |   15372 |
+| Recreational                      |     11533 |   11631 |
+| Personal Business                 |     11009 |   12672 |
+| Education                         |      8344 |    8365 |
+| Accompany Someone                 |      7623 |    7725 |
+| Pick-up or Deliver Something      |      3120 |    3122 |
+| Unknown Purpose (at start of day) |      1832 |      NA |
+| Other Purpose                     |       998 |     697 |
+| Change Mode                       |        12 |     142 |
+| Not Stated                        |         4 |       4 |
+| At or Go Home                     |        NA |   86905 |
+| Total                             |    221819 |  221819 |
+
+We have now imputed values for the NA places and purposes.
+
+### Mapping broad purpose alignments
+
+#### HBW Home based work
+
+#### HBE Home based education
+
+#### HBA Home based accompanying/escort trip
+
+#### HBS Home based shopping
+
+#### HBR Home based recreational
+
+#### HBO Home based other
+
+(e.g. health care, religious activity, visit friend/family)
+
+#### NHBW Non-home based work
+
+(e.g. from workplace to restaurant)
+
+#### NHBO Non-home based other
+
+(e.g. from supermarket to restaurant)
+
+#### RRT Round Trip
 
 ## Attach travel time
 
@@ -371,20 +478,20 @@ sessionInfo()
 ##  [1] fastDummies_1.7.4 lubridate_1.9.3   forcats_1.0.0     stringr_1.5.1    
 ##  [5] dplyr_1.1.4       purrr_1.0.2       readr_2.1.5       tidyr_1.3.1      
 ##  [9] tibble_3.2.1      ggplot2_3.5.1     tidyverse_2.0.0   knitr_1.48       
-## [13] conflicted_1.2.0 
+## [13] janitor_2.2.0     conflicted_1.2.0 
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] bit_4.0.5         gtable_0.3.5      jsonlite_1.8.8    crayon_1.5.3     
-##  [5] compiler_4.4.1    renv_1.0.7        tidyselect_1.2.1  parallel_4.4.1   
-##  [9] scales_1.3.0      yaml_2.3.10       fastmap_1.2.0     R6_2.5.1         
-## [13] generics_0.1.3    munsell_0.5.1     pillar_1.9.0      tzdb_0.4.0       
-## [17] rlang_1.1.4       utf8_1.2.4        stringi_1.8.4     cachem_1.1.0     
-## [21] xfun_0.47         bit64_4.0.5       timechange_0.3.0  memoise_2.0.1    
-## [25] cli_3.6.3         withr_3.0.1       magrittr_2.0.3    digest_0.6.37    
-## [29] grid_4.4.1        vroom_1.6.5       rstudioapi_0.16.0 hms_1.1.3        
-## [33] lifecycle_1.0.4   vctrs_0.6.5       evaluate_0.24.0   glue_1.7.0       
-## [37] fansi_1.0.6       colorspace_2.1-1  rmarkdown_2.28    tools_4.4.1      
-## [41] pkgconfig_2.0.3   htmltools_0.5.8.1
+##  [1] utf8_1.2.4        generics_0.1.3    renv_1.0.7        stringi_1.8.4    
+##  [5] hms_1.1.3         digest_0.6.37     magrittr_2.0.3    evaluate_0.24.0  
+##  [9] grid_4.4.1        timechange_0.3.0  fastmap_1.2.0     jsonlite_1.8.8   
+## [13] fansi_1.0.6       scales_1.3.0      cli_3.6.3         crayon_1.5.3     
+## [17] rlang_1.1.4       bit64_4.0.5       munsell_0.5.1     withr_3.0.1      
+## [21] cachem_1.1.0      yaml_2.3.10       parallel_4.4.1    tools_4.4.1      
+## [25] tzdb_0.4.0        memoise_2.0.1     colorspace_2.1-1  vctrs_0.6.5      
+## [29] R6_2.5.1          lifecycle_1.0.4   snakecase_0.11.1  bit_4.0.5        
+## [33] vroom_1.6.5       pkgconfig_2.0.3   pillar_1.9.0      gtable_0.3.5     
+## [37] glue_1.7.0        xfun_0.47         tidyselect_1.2.1  rstudioapi_0.16.0
+## [41] htmltools_0.5.8.1 rmarkdown_2.28    compiler_4.4.1
 ```
 
 [^1]: Victorian Government Department of Transport. 2022. Victorian

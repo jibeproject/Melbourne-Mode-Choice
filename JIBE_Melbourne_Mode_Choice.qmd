@@ -38,6 +38,7 @@ Project dependencies are describe in the [`renv.lock`](./renv.lock) file; see [r
 
 ```{r}
 library(conflicted) # package conflict handling https://stackoverflow.com/a/75058976
+library(janitor) # data cleaning
 library(knitr) # presentation
 library(tidyverse) # data handling
 library(fastDummies) # binary dummy variable utility
@@ -133,9 +134,9 @@ The VISTA Trips dataset variables (see [dictionary](./dictionaries/T_VISTA_1220%
 #| label: tbl-places-categories
 
 places<- full_join(
-  survey$T$origplace1%>%replace_na('NA')%>%table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Place','Origins (n)')),
-  survey$T$destplace1%>%replace_na('NA')%>%table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Place','Destinations (n)'))
-  )
+  trips$origplace1%>%replace_na('NA')%>%table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Place','Origins (n)')),
+  trips$destplace1%>%replace_na('NA')%>%table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Place','Destinations (n)'))
+  )%>%adorn_totals()
 kable(places)
 ```
 
@@ -143,7 +144,7 @@ In the above, 'Accommodation' may be thought of as 'Home'.
 
 There was one trip record missing an origin category (`origplace1` and `origplace2` both as NA), with destination of Accommodation (i.e. home).  
 ```{r}
- survey$T[is.na(survey$T$origplace1),][c('origplace1','destplace1','origpurp1','destpurp1')]
+ trips[is.na(trips$origplace1),][c('origplace1','destplace1','origpurp1','destpurp1')]
 ```
 
 There were coordinates recorded for this record (manual check), and the Vista data contained 'Purpose at Start of Trip Stage (Summary)' (`origpurp1`) as "Work related" and 'Purpose at End of Trip (Summary)' (`destpurp1`) as 'Go home'.  Following the TRADS example, this means, for derived purpose purposes this record would be an NA (i.e. return trip) and for derived full purpose, a home-based work trip. 
@@ -157,21 +158,87 @@ Here are the list of given trip start (origin) and end (destination) purposes:
 #| label: tbl-purpose-categories
 
 purpose<- full_join(
-  survey$T$origpurp1%>%replace_na('NA')%>%table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Purpose','Start (n)')),
-  survey$T$destpurp1%>%replace_na('NA')%>%table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Purpose','End (n)'))
-  )
+  trips$origpurp1%>%replace_na('NA')%>%table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Purpose','Start (n)')),
+  trips$destpurp1%>%replace_na('NA')%>%table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Purpose','End (n)'))
+  )%>%adorn_totals()
 kable(purpose)
 ```
 
 There were recorded instances of NA for one origin and one destination trip purpose.
 ```{r}
-survey$T[is.na(survey$T$origpurp1)|is.na(survey$T$destpurp1),][c('origplace1','destplace1','origpurp1','destpurp1')]
+trips[is.na(trips$origpurp1)|is.na(trips$destpurp1),][c('origplace1','destplace1','origpurp1','destpurp1')]
 ```
-One of these had a recorded origin of 'Transport Feature' (purpose: to 'Pick-up or Drop-off Someone') with destination of Workplace (purpose: NA).  Arguably if you're going into work, that's a work trip.  Perhaps there are grey areas (e.g. its your day off and you're picking up the sandwich you left in the fridge), but it would be consistent with TRADS to interpret this as a 'Non-Home Based Work Trip'.
+One of these had a recorded origin of 'Transport Feature' (purpose: to 'Pick-up or Drop-off Someone') with destination of Workplace (purpose: NA).  Arguably if you're going into work, that's a work-related trip.  Perhaps there are grey areas (e.g. its your day off and you're picking up the sandwich you left in the fridge), but it would be consistent with TRADS to interpret this as a 'Non-Home Based Work Trip'.
 
 The other is similar: from Workplace (purpose NA) to Place of Education (purpose: Education).  That's a 'Non-home based work' trip' (there isn't a non-home based education trip in the above classification schema, so the choice is easy).
 
 _**The question is**: do we derive trip purpose using destinations like in the TRADS example, or do we adapt the given VISTA purposes (and perhaps, just the destination purpose as that's really the reason for the trip)?_
+
+For now, I think I will derive a MITO purpose using origin, destination and destination purpose.  We can always revise the classification mapping.
+
+### Further trip cleaning prior to assignment, based on above review
+
+To ensure proper coding, `origplace1` will be recorded as work related (**for now, pending review with colleagues**)
+```{r}
+trips[is.na(trips$origplace1) & trips$origpurp1=='Work Related','origplace1'] <- 'Workplace'
+```
+
+
+Also, for now we will replace these respective NA values as 'workplace' (will run this past colleagues later for thoughts on this) to ensure we have the appropriate fields in order to categorise as NHBW, later.
+```{r}
+trips[is.na(trips$destpurp1) & trips$destplace1=='Workplace','destpurp1'] <- 'Work Related'
+trips[is.na(trips$origpurp1) & trips$origplace1=='Workplace','origpurp1'] <- 'Work Related'
+```
+
+
+Revised origin and destinations, following cleaning:
+```{r} 
+#| output: true
+#| label: tbl-places-categories.cleaned
+
+places<- full_join(
+  trips$origplace1%>%replace_na('NA')%>%table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Place','Origins (n)')),
+  trips$destplace1%>%replace_na('NA')%>%table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Place','Destinations (n)'))
+  )%>%adorn_totals()
+kable(places)
+```
+
+Revised purposes, following cleaning:
+```{r} 
+#| output: true
+#| label: tbl-purpose-categories.cleaned
+
+purpose<- full_join(
+  trips$origpurp1%>%replace_na('NA')%>%table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Purpose','Start (n)')),
+  trips$destpurp1%>%replace_na('NA')%>%table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Purpose','End (n)'))
+  )%>%adorn_totals()
+kable(purpose)
+```
+
+We have now imputed values for the NA places and purposes.
+
+### Mapping broad purpose alignments
+
+#### HBW	Home based work
+
+#### HBE	Home based education
+
+#### HBA	Home based accompanying/escort trip
+
+#### HBS	Home based shopping
+
+#### HBR	Home based recreational
+
+#### HBO	Home based other 
+(e.g. health care, religious activity, visit friend/family)
+
+#### NHBW	Non-home based work
+(e.g. from workplace to restaurant)
+
+#### NHBO	Non-home based other
+(e.g. from supermarket to restaurant)
+
+#### RRT	Round Trip
 
 ## Attach travel time 
 
