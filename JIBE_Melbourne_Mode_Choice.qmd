@@ -233,7 +233,14 @@ trips <- trips %>%
         destination == "Buy Something" ~ "HBS",
         destination == "Recreational" ~ "HBR",
         destination == "Other Purpose" ~ "HBO",
-        destination == "Accompany Someone" ~ "HBA"
+        destination %in% c("Accompany Someone","Pick-up or Drop-off Someone") ~ "HBA",
+        # Classify remaining trips using place information if clearer than purpose
+        destplace1 == "Workplace" ~ "HBW",
+        destplace1 == "Place of Education" ~ "HBE",
+        destplace1 == "Shops" ~ "HBS",
+        destplace1 %in% c("Recreational Place","Natural Feature", "Social Place") ~ "HBR",
+        destplace1 == "Place of Personal Business" ~ "business",
+        destplace1 %in% c("Accommodation","Change Mode","Transport Feature", "Other") ~ "HBO"
       ),
       destination == "At or Go Home" ~ "NA",
       origin == "Work Related" | destination == "Work Related" ~ "NHBW",
@@ -246,7 +253,7 @@ trips <- trips %>%
       origin == "Buy Something" ~ "HBS",
       origin == "Recreational" ~ "HBR",
       origin == "Other Purpose" ~ "HBO",
-      origin == "Accompany Someone" ~ "HBA"),
+      origin %in% c("Accompany Someone","Pick-up or Drop-off Someone") ~ "HBA"),
       TRUE ~ purpose
     )
   )
@@ -266,24 +273,7 @@ purpose.MITO <- trips$purpose %>%
 kable(purpose.MITO)
 ```
 
-THIS IS NOT YET READY; I BELIEVE THINGS FALLING THROUGH CRACKS
 
-This is a tast of what various classifications currently look like:
-
-'slipped through the cracks'
-```{r}
-#| output: true
-trips[is.na(trips$purpose),c('origin','destination','origplace1','destplace1')] %>% 
-  table() %>% 
-  as.data.frame() %>% 
-  arrange(desc(Freq)) %>%
-  filter(Freq > 0) %>%
-  kable()
-```
-
-Based on the above, its clear that 'Accommodation' is not 'Home' -- makes sense really.  To identify home, you need to use the `origpurp1` and `destpurp1` values because otherwise it is just a synonym for a residence (not necessarily your own).  Need to think about what it means (may o rmay not be recreation).  
-
-More broadly, perhaps best to re-work all this to just use `origpurp1` and `destpurp1` and not `origplace1` and `destplace1` as is currently the case.
 
 ## Attach travel time 
 Car and pt travel time are simulated in MATSim using the recorded coordinates/zones of the trip origin and destination

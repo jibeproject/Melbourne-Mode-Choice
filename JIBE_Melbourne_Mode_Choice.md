@@ -424,7 +424,14 @@ trips <- trips %>%
         destination == "Buy Something" ~ "HBS",
         destination == "Recreational" ~ "HBR",
         destination == "Other Purpose" ~ "HBO",
-        destination == "Accompany Someone" ~ "HBA"
+        destination %in% c("Accompany Someone","Pick-up or Drop-off Someone") ~ "HBA",
+        # Classify remaining trips using place information if clearer than purpose
+        destplace1 == "Workplace" ~ "HBW",
+        destplace1 == "Place of Education" ~ "HBE",
+        destplace1 == "Shops" ~ "HBS",
+        destplace1 %in% c("Recreational Place","Natural Feature", "Social Place") ~ "HBR",
+        destplace1 == "Place of Personal Business" ~ "business",
+        destplace1 %in% c("Accommodation","Change Mode","Transport Feature", "Other") ~ "HBO"
       ),
       destination == "At or Go Home" ~ "NA",
       origin == "Work Related" | destination == "Work Related" ~ "NHBW",
@@ -437,7 +444,7 @@ trips <- trips %>%
       origin == "Buy Something" ~ "HBS",
       origin == "Recreational" ~ "HBR",
       origin == "Other Purpose" ~ "HBO",
-      origin == "Accompany Someone" ~ "HBA"),
+      origin %in% c("Accompany Someone","Pick-up or Drop-off Someone") ~ "HBA"),
       TRUE ~ purpose
     )
   )
@@ -456,81 +463,21 @@ purpose.MITO <- trips$purpose %>%
 kable(purpose.MITO)
 ```
 
-| MITO Purpose           |  Count |
-|:-----------------------|-------:|
-| NA                     |  78543 |
-| NHBO                   |  24868 |
-| slipped through cracks |  24650 |
-| business               |  23222 |
-| HBW                    |  18987 |
-| NHBW                   |  15293 |
-| HBS                    |  12765 |
-| HBR                    |   8941 |
-| HBE                    |   7080 |
-| HBA                    |   5223 |
-| unknown                |   1760 |
-| HBO                    |    395 |
-| RRT                    |     92 |
-| Total                  | 221819 |
-
-THIS IS NOT YET READY; I BELIEVE THINGS FALLING THROUGH CRACKS
-
-This is a tast of what various classifications currently look like:
-
-‘slipped through the cracks’
-
-``` r
-trips[is.na(trips$purpose),c('origin','destination','origplace1','destplace1')] %>% 
-  table() %>% 
-  as.data.frame() %>% 
-  arrange(desc(Freq)) %>%
-  filter(Freq > 0) %>%
-  kable()
-```
-
-| origin  | destination                  | origplace1    | destplace1                 | Freq |
-|:--------|:-----------------------------|:--------------|:---------------------------|-----:|
-| At Home | Pick-up or Drop-off Someone  | Accommodation | Place of Education         | 5569 |
-| At Home | Social                       | Accommodation | Accommodation              | 4965 |
-| At Home | Social                       | Accommodation | Social Place               | 4919 |
-| At Home | Pick-up or Drop-off Someone  | Accommodation | Accommodation              | 1534 |
-| At Home | Pick-up or Drop-off Someone  | Accommodation | Transport Feature          | 1256 |
-| At Home | Social                       | Accommodation | Shops                      | 1107 |
-| At Home | Social                       | Accommodation | Recreational Place         |  754 |
-| At Home | Pick-up or Deliver Something | Accommodation | Place of Personal Business |  448 |
-| At Home | Pick-up or Deliver Something | Accommodation | Shops                      |  433 |
-| At Home | Pick-up or Drop-off Someone  | Accommodation | Workplace                  |  401 |
-| At Home | Pick-up or Drop-off Someone  | Accommodation | Shops                      |  381 |
-| At Home | Social                       | Accommodation | Natural Feature            |  367 |
-| At Home | Pick-up or Deliver Something | Accommodation | Accommodation              |  362 |
-| At Home | Pick-up or Drop-off Someone  | Accommodation | Recreational Place         |  354 |
-| At Home | Pick-up or Drop-off Someone  | Accommodation | Place of Personal Business |  271 |
-| At Home | Social                       | Accommodation | Place of Personal Business |  252 |
-| At Home | Pick-up or Drop-off Someone  | Accommodation | Social Place               |  222 |
-| At Home | Social                       | Accommodation | Place of Education         |  212 |
-| At Home | Pick-up or Deliver Something | Accommodation | Social Place               |  195 |
-| At Home | Social                       | Accommodation | Other                      |  115 |
-| At Home | Change Mode                  | Accommodation | Transport Feature          |  107 |
-| At Home | Pick-up or Deliver Something | Accommodation | Place of Education         |   96 |
-| At Home | Pick-up or Drop-off Someone  | Accommodation | Other                      |   71 |
-| At Home | Pick-up or Deliver Something | Accommodation | Other                      |   44 |
-| At Home | Social                       | Accommodation | Workplace                  |   42 |
-| At Home | Pick-up or Drop-off Someone  | Accommodation | Natural Feature            |   39 |
-| At Home | Social                       | Accommodation | Transport Feature          |   38 |
-| At Home | Pick-up or Deliver Something | Accommodation | Workplace                  |   38 |
-| At Home | Pick-up or Deliver Something | Accommodation | Recreational Place         |   31 |
-| At Home | Pick-up or Deliver Something | Accommodation | Transport Feature          |   22 |
-| At Home | Pick-up or Deliver Something | Accommodation | Natural Feature            |    5 |
-
-Based on the above, its clear that ‘Accommodation’ is not ‘Home’ – makes
-sense really. To identify home, you need to use the `origpurp1` and
-`destpurp1` values because otherwise it is just a synonym for a
-residence (not necessarily your own). Need to think about what it means
-(may o rmay not be recreation).
-
-More broadly, perhaps best to re-work all this to just use `origpurp1`
-and `destpurp1` and not `origplace1` and `destplace1` as is currently
-the case.
+| MITO Purpose |  Count |
+|:-------------|-------:|
+| NA           |  78543 |
+| NHBO         |  24868 |
+| business     |  23922 |
+| HBW          |  19067 |
+| HBA          |  15321 |
+| NHBW         |  15293 |
+| HBR          |  15212 |
+| HBS          |  14305 |
+| HBE          |   7388 |
+| HBO          |   6048 |
+| unknown      |   1760 |
+| RRT          |     92 |
+| Total        | 221819 |
 
 ## Attach travel time
 
