@@ -410,8 +410,8 @@ We have now imputed values for the NA places and purposes.
 ### Assign trip purpose for MITO
 
 ``` r
+trips <- trips %>%   rename(origin=origplace1, destination=destplace1)
 trips <- trips %>% 
-  rename(origin=origplace1, destination=destplace1) %>% 
   mutate(
     purpose = case_when(
       origin == "Place of Personal Business" | destination == "B" ~ "business",
@@ -420,7 +420,7 @@ trips <- trips %>%
       origin == "RRT" | destination == "RRT" ~ "RRT",
       origin == "Accommodation" ~ case_when(
       destination == "Workplace" ~ "HBW",
-      destination == "Education" ~ "HBE",
+      destination == "Place of Education" ~ "HBE",
       destination == "Shops" ~ "HBS",
       destination %in% c(
           "Natural Feature",
@@ -462,19 +462,192 @@ kable(purpose.MITO)
 | MITO Purpose           |  Count |
 |:-----------------------|-------:|
 | NA                     |  79437 |
-| slipped through cracks |  39520 |
+| slipped through cracks |  25399 |
 | HBR                    |  21369 |
 | HBW                    |  18866 |
 | NHBO                   |  18112 |
 | HBS                    |  17293 |
+| HBE                    |  16364 |
 | NHBW                   |  14203 |
 | business               |   8299 |
-| HBA                    |   3519 |
+| HBA                    |   1276 |
 | HBO                    |   1199 |
 | unknown                |      2 |
 | Total                  | 221819 |
 
 THIS IS NOT YET READY; I BELIEVE THINGS FALLING THROUGH CRACKS
+
+This is a tast of what various classifications currently look like:
+
+‘slipped through the cracks’
+
+``` r
+trips[is.na(trips$purpose),c('origin','destination','origpurp1','destpurp1')] %>% 
+  table() %>% 
+  as.data.frame() %>% 
+  arrange(desc(Freq)) %>%
+  filter(Freq > 0) %>%
+  kable()
+```
+
+| origin        | destination                | origpurp1                    | destpurp1                    | Freq |
+|:--------------|:---------------------------|:-----------------------------|:-----------------------------|-----:|
+| Accommodation | Accommodation              | Social                       | At or Go Home                | 5577 |
+| Accommodation | Accommodation              | At Home                      | Social                       | 4965 |
+| Accommodation | Place of Personal Business | At Home                      | Personal Business            | 3625 |
+| Accommodation | Accommodation              | Pick-up or Drop-off Someone  | At or Go Home                | 1676 |
+| Accommodation | Accommodation              | At Home                      | Pick-up or Drop-off Someone  | 1534 |
+| Accommodation | Transport Feature          | At Home                      | Pick-up or Drop-off Someone  | 1256 |
+| Accommodation | Accommodation              | At Home                      | Personal Business            |  794 |
+| Accommodation | Place of Personal Business | At Home                      | Pick-up or Deliver Something |  448 |
+| Accommodation | Accommodation              | Accompany Someone            | At or Go Home                |  401 |
+| Accommodation | Accommodation              | Pick-up or Deliver Something | At or Go Home                |  382 |
+| Accommodation | Accommodation              | At Home                      | Pick-up or Deliver Something |  362 |
+| Accommodation | Accommodation              | Social                       | Social                       |  351 |
+| Accommodation | Accommodation              | Personal Business            | At or Go Home                |  299 |
+| Accommodation | Place of Personal Business | At Home                      | Pick-up or Drop-off Someone  |  271 |
+| Accommodation | Place of Personal Business | At Home                      | Social                       |  252 |
+| Accommodation | Place of Personal Business | At Home                      | Work Related                 |  250 |
+| Accommodation | Accommodation              | At Home                      | Work Related                 |  171 |
+| Accommodation | Accommodation              | Work Related                 | At or Go Home                |  159 |
+| Accommodation | Place of Personal Business | At Home                      | Buy Something                |  152 |
+| Accommodation | Accommodation              | Pick-up or Drop-off Someone  | Pick-up or Drop-off Someone  |  142 |
+| Accommodation | Accommodation              | Social                       | Personal Business            |  126 |
+| Accommodation | Accommodation              | Pick-up or Drop-off Someone  | Social                       |  123 |
+| Accommodation | Transport Feature          | At Home                      | Change Mode                  |  107 |
+| Accommodation | Accommodation              | Social                       | Pick-up or Drop-off Someone  |  103 |
+| Accommodation | Transport Feature          | At Home                      | Personal Business            |   97 |
+| Accommodation | Transport Feature          | At Home                      | Recreational                 |   94 |
+| Accommodation | Accommodation              | At Home                      | At or Go Home                |   90 |
+| Accommodation | Accommodation              | Recreational                 | At or Go Home                |   88 |
+| Accommodation | Accommodation              | At Home                      | Recreational                 |   81 |
+| Accommodation | Place of Personal Business | At Home                      | Recreational                 |   78 |
+| Accommodation | Place of Personal Business | Social                       | Personal Business            |   76 |
+| Accommodation | Place of Personal Business | At Home                      | Other Purpose                |   66 |
+| Accommodation | Place of Personal Business | Pick-up or Drop-off Someone  | Personal Business            |   65 |
+| Accommodation | Transport Feature          | At Home                      | Work Related                 |   59 |
+| Accommodation | Accommodation              | Other Purpose                | At or Go Home                |   57 |
+| Accommodation | Accommodation              | Buy Something                | At or Go Home                |   55 |
+| Accommodation | Accommodation              | At Home                      | Other Purpose                |   53 |
+| Accommodation | Accommodation              | Pick-up or Deliver Something | Pick-up or Deliver Something |   52 |
+| Accommodation | Accommodation              | At Home                      | Buy Something                |   46 |
+| Accommodation | Transport Feature          | At Home                      | Social                       |   38 |
+| Accommodation | Place of Personal Business | At Home                      | Education                    |   37 |
+| Accommodation | Accommodation              | Personal Business            | Personal Business            |   37 |
+| Accommodation | Accommodation              | Personal Business            | Social                       |   35 |
+| Accommodation | Accommodation              | Pick-up or Deliver Something | Social                       |   35 |
+| Accommodation | Accommodation              | Work Related                 | Work Related                 |   33 |
+| Accommodation | Accommodation              | Education                    | At or Go Home                |   32 |
+| Accommodation | Transport Feature          | Social                       | Pick-up or Drop-off Someone  |   31 |
+| Accommodation | Accommodation              | Pick-up or Drop-off Someone  | Personal Business            |   28 |
+| Accommodation | Transport Feature          | Pick-up or Drop-off Someone  | Pick-up or Drop-off Someone  |   28 |
+| Accommodation | Accommodation              | At Home                      | Education                    |   23 |
+| Accommodation | Transport Feature          | At Home                      | Other Purpose                |   22 |
+| Accommodation | Transport Feature          | At Home                      | Pick-up or Deliver Something |   22 |
+| Accommodation | Accommodation              | Social                       | Pick-up or Deliver Something |   22 |
+| Accommodation | Accommodation              | Accompany Someone            | Social                       |   21 |
+| Accommodation | Place of Personal Business | Social                       | Social                       |   21 |
+| Accommodation | Place of Personal Business | Pick-up or Drop-off Someone  | Pick-up or Drop-off Someone  |   19 |
+| Accommodation | Transport Feature          | At Home                      | Education                    |   15 |
+| Accommodation | Place of Personal Business | Personal Business            | Personal Business            |   15 |
+| Accommodation | Place of Personal Business | Social                       | Pick-up or Deliver Something |   15 |
+| Accommodation | Place of Personal Business | Social                       | Pick-up or Drop-off Someone  |   14 |
+| Accommodation | Accommodation              | Personal Business            | Pick-up or Drop-off Someone  |   13 |
+| Accommodation | Place of Personal Business | Pick-up or Drop-off Someone  | Social                       |   13 |
+| Accommodation | Transport Feature          | At Home                      | Buy Something                |   12 |
+| Accommodation | Accommodation              | Pick-up or Drop-off Someone  | Pick-up or Deliver Something |   12 |
+| Accommodation | Place of Personal Business | Pick-up or Drop-off Someone  | Pick-up or Deliver Something |   12 |
+| Accommodation | Accommodation              | Pick-up or Deliver Something | Pick-up or Drop-off Someone  |   12 |
+| Accommodation | Place of Personal Business | Pick-up or Deliver Something | Personal Business            |    9 |
+| Accommodation | Place of Personal Business | Pick-up or Deliver Something | Pick-up or Deliver Something |    9 |
+| Accommodation | Accommodation              | Buy Something                | Buy Something                |    8 |
+| Accommodation | Place of Personal Business | Social                       | Buy Something                |    8 |
+| Accommodation | Accommodation              | Personal Business            | Pick-up or Deliver Something |    7 |
+| Accommodation | Accommodation              | Accompany Someone            | Pick-up or Drop-off Someone  |    6 |
+| Accommodation | Accommodation              | Work Related                 | Pick-up or Drop-off Someone  |    6 |
+| Accommodation | Accommodation              | Accompany Someone            | Personal Business            |    5 |
+| Accommodation | Transport Feature          | Personal Business            | Pick-up or Drop-off Someone  |    5 |
+| Accommodation | Place of Personal Business | Social                       | Recreational                 |    5 |
+| Accommodation | Accommodation              | Social                       | Buy Something                |    4 |
+| Accommodation | Place of Personal Business | Social                       | Other Purpose                |    4 |
+| Accommodation | Place of Personal Business | Accompany Someone            | Personal Business            |    4 |
+| Accommodation | Accommodation              | Pick-up or Deliver Something | Personal Business            |    4 |
+| Accommodation | Accommodation              | Buy Something                | Pick-up or Deliver Something |    4 |
+| Accommodation | Accommodation              | Social                       | Recreational                 |    4 |
+| Accommodation | Accommodation              | Other Purpose                | Social                       |    4 |
+| Accommodation | Place of Personal Business | Pick-up or Deliver Something | Social                       |    4 |
+| Accommodation | Accommodation              | Recreational                 | Social                       |    4 |
+| Accommodation | Accommodation              | Pick-up or Drop-off Someone  | Work Related                 |    4 |
+| Accommodation | Place of Personal Business | Pick-up or Drop-off Someone  | Work Related                 |    4 |
+| Accommodation | Transport Feature          | Social                       | Change Mode                  |    3 |
+| Accommodation | Accommodation              | Pick-up or Deliver Something | Other Purpose                |    3 |
+| Accommodation | Transport Feature          | Pick-up or Drop-off Someone  | Personal Business            |    3 |
+| Accommodation | Accommodation              | Other Purpose                | Pick-up or Deliver Something |    3 |
+| Accommodation | Place of Personal Business | Personal Business            | Pick-up or Deliver Something |    3 |
+| Accommodation | Accommodation              | Pick-up or Drop-off Someone  | Recreational                 |    3 |
+| Accommodation | Accommodation              | Recreational                 | Recreational                 |    3 |
+| Accommodation | Accommodation              | Pick-up or Drop-off Someone  | Buy Something                |    2 |
+| Accommodation | Place of Personal Business | Pick-up or Drop-off Someone  | Education                    |    2 |
+| Accommodation | Place of Personal Business | Social                       | Education                    |    2 |
+| Accommodation | Accommodation              | Pick-up or Drop-off Someone  | Other Purpose                |    2 |
+| Accommodation | Accommodation              | Recreational                 | Personal Business            |    2 |
+| Accommodation | Accommodation              | Work Related                 | Pick-up or Deliver Something |    2 |
+| Accommodation | Place of Personal Business | Other Purpose                | Pick-up or Drop-off Someone  |    2 |
+| Accommodation | Place of Personal Business | Pick-up or Drop-off Someone  | Recreational                 |    2 |
+| Accommodation | Transport Feature          | Pick-up or Drop-off Someone  | Recreational                 |    2 |
+| Accommodation | Accommodation              | Buy Something                | Social                       |    2 |
+| Accommodation | Place of Personal Business | Personal Business            | Work Related                 |    2 |
+| Accommodation | Transport Feature          | Pick-up or Drop-off Someone  | Work Related                 |    2 |
+| Accommodation | Accommodation              | Social                       | Work Related                 |    2 |
+| Accommodation | Place of Personal Business | Social                       | Work Related                 |    2 |
+| Accommodation | Accommodation              | Personal Business            | Buy Something                |    1 |
+| Accommodation | Place of Personal Business | Personal Business            | Buy Something                |    1 |
+| Accommodation | Accommodation              | Pick-up or Deliver Something | Buy Something                |    1 |
+| Accommodation | Transport Feature          | Pick-up or Drop-off Someone  | Buy Something                |    1 |
+| Accommodation | Transport Feature          | Accompany Someone            | Change Mode                  |    1 |
+| Accommodation | Transport Feature          | Pick-up or Drop-off Someone  | Change Mode                  |    1 |
+| Accommodation | Accommodation              | Accompany Someone            | Education                    |    1 |
+| Accommodation | Accommodation              | Pick-up or Drop-off Someone  | Education                    |    1 |
+| Accommodation | Accommodation              | Social                       | Education                    |    1 |
+| Accommodation | Transport Feature          | At Home                      | Not Stated                   |    1 |
+| Accommodation | Accommodation              | Personal Business            | Other Purpose                |    1 |
+| Accommodation | Place of Personal Business | Personal Business            | Other Purpose                |    1 |
+| Accommodation | Transport Feature          | Pick-up or Deliver Something | Other Purpose                |    1 |
+| Accommodation | Place of Personal Business | Pick-up or Drop-off Someone  | Other Purpose                |    1 |
+| Accommodation | Accommodation              | Social                       | Other Purpose                |    1 |
+| Accommodation | Accommodation              | Other Purpose                | Personal Business            |    1 |
+| Accommodation | Place of Personal Business | Recreational                 | Personal Business            |    1 |
+| Accommodation | Transport Feature          | Social                       | Personal Business            |    1 |
+| Accommodation | Place of Personal Business | Work Related                 | Personal Business            |    1 |
+| Accommodation | Accommodation              | Accompany Someone            | Pick-up or Deliver Something |    1 |
+| Accommodation | Place of Personal Business | Work Related                 | Pick-up or Deliver Something |    1 |
+| Accommodation | Place of Personal Business | Accompany Someone            | Pick-up or Drop-off Someone  |    1 |
+| Accommodation | Transport Feature          | Accompany Someone            | Pick-up or Drop-off Someone  |    1 |
+| Accommodation | Accommodation              | Buy Something                | Pick-up or Drop-off Someone  |    1 |
+| Accommodation | Accommodation              | Education                    | Pick-up or Drop-off Someone  |    1 |
+| Accommodation | Transport Feature          | Education                    | Pick-up or Drop-off Someone  |    1 |
+| Accommodation | Accommodation              | Other Purpose                | Pick-up or Drop-off Someone  |    1 |
+| Accommodation | Place of Personal Business | Personal Business            | Pick-up or Drop-off Someone  |    1 |
+| Accommodation | Transport Feature          | Pick-up or Deliver Something | Pick-up or Drop-off Someone  |    1 |
+| Accommodation | Place of Personal Business | Work Related                 | Pick-up or Drop-off Someone  |    1 |
+| Accommodation | Accommodation              | Buy Something                | Recreational                 |    1 |
+| Accommodation | Transport Feature          | Pick-up or Drop-off Someone  | Social                       |    1 |
+| Accommodation | Place of Personal Business | Recreational                 | Social                       |    1 |
+| Accommodation | Transport Feature          | Social                       | Social                       |    1 |
+| Accommodation | Place of Personal Business | Accompany Someone            | Work Related                 |    1 |
+| Accommodation | Place of Personal Business | Buy Something                | Work Related                 |    1 |
+| Accommodation | Accommodation              | Personal Business            | Work Related                 |    1 |
+| Accommodation | Place of Personal Business | Work Related                 | Work Related                 |    1 |
+
+Based on the above, its clear that ‘Accommodation’ is not ‘Home’ – makes
+sense really. To identify home, you need to use the `origpurp1` and
+`destpurp1` values because otherwise it is just a synonym for a
+residence (not necessarily your own). Need to think about what it means
+(may o rmay not be recreation).
+
+More broadly, perhaps best to re-work all this to just use `origpurp1`
+and `destpurp1` and not `origplace1` and `destplace1` as is currently
+the case.
 
 ## Attach travel time
 

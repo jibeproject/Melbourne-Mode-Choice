@@ -219,8 +219,8 @@ We have now imputed values for the NA places and purposes.
 
 ### Assign trip purpose for MITO
 ```{r}
+trips <- trips %>%   rename(origin=origplace1, destination=destplace1)
 trips <- trips %>% 
-  rename(origin=origplace1, destination=destplace1) %>% 
   mutate(
     purpose = case_when(
       origin == "Place of Personal Business" | destination == "B" ~ "business",
@@ -229,7 +229,7 @@ trips <- trips %>%
       origin == "RRT" | destination == "RRT" ~ "RRT",
       origin == "Accommodation" ~ case_when(
       destination == "Workplace" ~ "HBW",
-      destination == "Education" ~ "HBE",
+      destination == "Place of Education" ~ "HBE",
       destination == "Shops" ~ "HBS",
       destination %in% c(
           "Natural Feature",
@@ -270,6 +270,23 @@ kable(purpose.MITO)
 ```
 
 THIS IS NOT YET READY; I BELIEVE THINGS FALLING THROUGH CRACKS
+
+This is a tast of what various classifications currently look like:
+
+'slipped through the cracks'
+```{r}
+#| output: true
+trips[is.na(trips$purpose),c('origin','destination','origpurp1','destpurp1')] %>% 
+  table() %>% 
+  as.data.frame() %>% 
+  arrange(desc(Freq)) %>%
+  filter(Freq > 0) %>%
+  kable()
+```
+
+Based on the above, its clear that 'Accommodation' is not 'Home' -- makes sense really.  To identify home, you need to use the `origpurp1` and `destpurp1` values because otherwise it is just a synonym for a residence (not necessarily your own).  Need to think about what it means (may o rmay not be recreation).  
+
+More broadly, perhaps best to re-work all this to just use `origpurp1` and `destpurp1` and not `origplace1` and `destplace1` as is currently the case.
 
 ## Attach travel time 
 Car and pt travel time are simulated in MATSim using the recorded coordinates/zones of the trip origin and destination
