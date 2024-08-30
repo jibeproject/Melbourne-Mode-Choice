@@ -406,7 +406,31 @@ kable(purpose %>% replace(is.na(.), 0)) # NA counts are really zeroes
 
 We have now imputed values for the NA places and purposes.
 
-### Mapping broad purpose alignments
+### Assign trip purpose for MITO
+
+trips \<- trips %\>% rename(origin=origplace1, destination=destplace1)
+%\>% within({ t.purpose = case_when( t.origin == “B” \| t.destination ==
+“B” ~ “business”, t.origin == “unknown” \| t.destination == “unknown” ~
+“unknown”, t.origin == “RRT” \| t.destination == “RRT” ~ “RRT”, t.origin
+== “H” ~ case_when( t.destination == “W” ~ “HBW”, t.destination == “E” ~
+“HBE”, t.destination == “A” ~ “HBA”, t.destination == “S” ~ “HBS”,
+t.destination == “R” ~ “HBR”, t.destination == “O” ~ “HBO”),
+t.destination == “H” ~ “NA”, \# return trip t.origin == “W” \|
+t.destination == “W” ~ “NHBW”, TRUE ~ “NHBO”)
+
+        ## Further define purpose for return trips
+        t.full_purpose = case_when(
+            t.purpose == "NA" ~ case_when(
+                t.origin == "W" ~ "HBW",
+                t.origin == "E" ~ "HBE",
+                t.origin == "A" ~ "HBA",
+                t.origin == "S" ~ "HBS",
+                t.origin == "R" ~ "HBR",
+                t.origin == "O" ~ "HBO"),
+            TRUE ~ t.purpose
+            )
+
+})
 
 #### HBW Home based work
 

@@ -217,30 +217,60 @@ kable(purpose %>% replace(is.na(.), 0)) # NA counts are really zeroes
 
 We have now imputed values for the NA places and purposes.
 
-### Mapping broad purpose alignments
-
-#### HBW	Home based work
-
-#### HBE	Home based education
-
-#### HBA	Home based accompanying/escort trip
-
-#### HBS	Home based shopping
-
-#### HBR	Home based recreational
-
-#### HBO	Home based other 
-(e.g. health care, religious activity, visit friend/family)
-
-#### NHBW	Non-home based work
-(e.g. from workplace to restaurant)
-
-#### NHBO	Non-home based other
-(e.g. from supermarket to restaurant)
-
-#### RRT	Round Trip
-
+### Assign trip purpose for MITO
+```{r}
+trips <- trips %>% 
+    rename(origin=origplace1, destination=destplace1) %>%
+    within({
+        trips.purpose = case_when(
+        trips.origin == "Place of Personal Business" | trips.destination == "B" ~ "business", ## is this right?
+        trips.origin %in% c("NA", "Not Stated")          | 
+            is.NA(trips.origin) ~ "unknown"            |
+            trips.destination %in% c("NA", "Not Stated") | 
+            is.NA(trips.destination) 
+              ~ "unknown",
+        trips.origin == "RRT" | trips.destination == "RRT" ~ "RRT", ## This case doesn't exist in our data 
+        trips.origin == "Accommodation" ~ case_when(
+            trips.destination == "Workplace" ~ "HBW", 
+            trips.destination == "Education" ~ "HBE",
+            trips.destination == "Shops" ~ "HBS",
+            trips.destination %in% c("Natural Feature","Recreational Place","Social Place") ~ "HBR",
+            trips.destination == "Other" ~ "HBO",
+            trips.destpurp1 == "Accompany Someone" ~ "HBA",  ## Should we use purpose of 'Accompany Someone', even if Destination suggests something else? 
+            ),
+        trips.destination == "Accommodation" ~ "NA", # return trip
+        trips.origin == "Workplace" | trips.destination == "Workplace" ~ "NHBW",
+        TRUE ~ "NHBO")
+    
+        ## Further define purpose for return trips
+        trips.full_purpose = case_when(
+            trips.purpose == "NA" ~ case_when(
+                trips.origin == "Workplace" ~ "HBW",
+                trips.origin == "Place of Education" ~ "HBE",
+                trips.origin == "Shops" ~ "HBS",
+                trips.origin %in% c("Natural Feature","Recreational Place","Social Place") ~ "HBR",
+                trips.origin == "Other" ~ "HBO",
+                trips.destpurp1 == "Accompany Someone" ~ "HBA"),
+            TRUE ~ trips.purpose
+            )
+})
+```
 ## Attach travel time 
+# Car and pt travel time are simulated in MATSim using the recorded coordinates/zones of the trip origin and destination
+
+carTravelTime=read_csv("data/melbourne/travelTime/carCongested_10perc.csv")%>%filter(Route=="carCongested")
+ptTravelTime=read_csv("data/melbourne/travelTime/ptTravelTime_matsim.csv")
+
+trips = trips%>%
+  left_join(carTravelTime[,c("IDNumber","PersonNumber","TripNumber","time","dist")],by=c("hh.id"="IDNumber","p.id"="PersonNumber","t.id"="TripNumber"))%>%
+  left_join(ptTravelTime[,c("IDNumber","PersonNumber","TripNumber","totalTravelTime")],by=c("hh.id"="IDNumber","p.id"="PersonNumber","t.id"="TripNumber"))
+
+colnames(trips)[which(names(trips) == "time")] = "carTravelTime_sec"
+colnames(trips)[which(names(trips) == "totalTravelTime")]  = "ptTravelTime_sec"
+
+trips$carTravelTime_sec = as.numeric(trips$carTravelTime_sec)
+trips$ptTravelTime_sec = as.numeric(trips$ptTravelTime_sec)
+trips$dist = as.numeric(trips$dist)
 
 ## Filter out invalid trips records 
 
