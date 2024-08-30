@@ -351,7 +351,7 @@ trips[is.na(trips$destpurp1) & trips$destplace1=='Workplace','destpurp1'] <- 'Wo
 trips[is.na(trips$origpurp1) & trips$origplace1=='Workplace','origpurp1'] <- 'Work Related'
 ```
 
-Revised origin and destinations, following cleaning:
+### Revised origin and destination places, following cleaning:
 
 ``` r
 places<- full_join(
@@ -376,7 +376,7 @@ kable(places %>% replace(is.na(.), 0)) # NA counts are really zeroes
 | Not Stated                 |           1 |                1 |
 | Total                      |      221819 |           221819 |
 
-Revised purposes, following cleaning:
+### Revised origin and destination purposes, following cleaning:
 
 ``` r
 purpose<- full_join(
