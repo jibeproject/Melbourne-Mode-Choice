@@ -478,24 +478,47 @@ THIS IS NOT YET READY; I BELIEVE THINGS FALLING THROUGH CRACKS
 
 ## Attach travel time
 
-# Car and pt travel time are simulated in MATSim using the recorded coordinates/zones of the trip origin and destination
+Car and pt travel time are simulated in MATSim using the recorded
+coordinates/zones of the trip origin and destination
 
-carTravelTime=read_csv(“data/melbourne/travelTime/carCongested_10perc.csv”)%\>%filter(Route==“carCongested”)
-ptTravelTime=read_csv(“data/melbourne/travelTime/ptTravelTime_matsim.csv”)
+THIS CODE IS NOT CURRENTLY RUN. Its pending the above analysis being
+finalised, and {r} being added to the code block to trigger its running.
 
-trips = trips%\>%
-left_join(carTravelTime\[,c(“IDNumber”,“PersonNumber”,“TripNumber”,“time”,“dist”)\],by=c(“hh.id”=“IDNumber”,“p.id”=“PersonNumber”,“t.id”=“TripNumber”))%\>%
-left_join(ptTravelTime\[,c(“IDNumber”,“PersonNumber”,“TripNumber”,“totalTravelTime”)\],by=c(“hh.id”=“IDNumber”,“p.id”=“PersonNumber”,“t.id”=“TripNumber”))
+    carTravelTime=read_csv("data/melbourne/travelTime/carCongested_10perc.csv")%>%filter(Route=="carCongested")
+    ptTravelTime=read_csv("data/melbourne/travelTime/ptTravelTime_matsim.csv")
 
-colnames(trips)\[which(names(trips) == “time”)\] = “carTravelTime_sec”
-colnames(trips)\[which(names(trips) == “totalTravelTime”)\] =
-“ptTravelTime_sec”
+    trips = trips%>%
+      left_join(carTravelTime[,c("IDNumber","PersonNumber","TripNumber","time","dist")],by=c("hh.id"="IDNumber","p.id"="PersonNumber","t.id"="TripNumber"))%>%
+      left_join(ptTravelTime[,c("IDNumber","PersonNumber","TripNumber","totalTravelTime")],by=c("hh.id"="IDNumber","p.id"="PersonNumber","t.id"="TripNumber"))
 
-trips$carTravelTime_sec = as.numeric(trips$carTravelTime_sec)
-trips$ptTravelTime_sec = as.numeric(trips$ptTravelTime_sec)
-trips$dist = as.numeric(trips$dist)
+    colnames(trips)[which(names(trips) == "time")] = "carTravelTime_sec"
+    colnames(trips)[which(names(trips) == "totalTravelTime")]  = "ptTravelTime_sec"
+
+    trips$carTravelTime_sec = as.numeric(trips$carTravelTime_sec)
+    trips$ptTravelTime_sec = as.numeric(trips$ptTravelTime_sec)
+    trips$dist = as.numeric(trips$dist)
 
 ## Filter out invalid trips records
+
+CODE NOT CURRENTLY IMPLEMENTED PENDING ABOVE (needs {r} added to
+codeblock)
+
+    # 1. filter out trips origin/destination outside Boundary (after filtering 30044 trips) 
+    # The boundary is defined as 10 km over the study area and the full coverage of the spatial attributes 
+    trips = trips%>%
+      left_join(carTravelTime[,c("IDNumber","PersonNumber","TripNumber","OriginWithinBoundary","DestinationWithinBoundary","SameOrigAndDest")],
+                by=c("hh.id"="IDNumber","p.id"="PersonNumber","t.id"="TripNumber"))
+
+    trips = trips%>%
+      filter(OriginWithinBoundary&DestinationWithinBoundary=="true")
+
+    # 2. filter out trips with mode "Other" or "unknown" (after filtering 29932)
+    trips = trips%>%
+      filter(!t.m_main_agg%in%c("Other","unknown"))
+
+    # 3. filter out trips with purpose "RRT", "business", and "unknown" and "return home" (after filtering 27952)
+    trips = trips%>%
+      filter(!t.purpose%in%c("RRT","unknown","business"))
 
 ## Deal with intrazonal trips
 
@@ -506,9 +529,59 @@ having origin and destination are recorded with the same output area
 For Melbourne, we need to check if intrazonal trips exist, sharing
 identical origin and destination coordinates.
 
+CODE NOT CURRENTLY IMPLEMENTED PENDING ABOVE (needs {r} added to
+codeblock)
+
+    # Estimate distance-dependent speed of car and pt
+    averageSpeed = trips%>%
+      filter(SameOrigAndDest == "false" & dist != 0 & carTravelTime_sec != 0 & ptTravelTime_sec != 0)%>%
+      mutate(speed_car = as.numeric(dist)/carTravelTime_sec,
+             speed_pt = as.numeric(dist)/ptTravelTime_sec)
+
+    lm_carSpeed=lm(speed_car ~ as.numeric(dist),averageSpeed)
+    summary(lm_carSpeed)
+    lm_ptSpeed=lm(speed_pt ~ sqrt(as.numeric(dist)),averageSpeed)
+    summary(lm_ptSpeed)
+
+
+    # Use reported trip length to impute travel time of alternative modes,
+    # If reported trip length == 0, then use reported travel time to impute travel time of alternative modes
+
+    intrazonalTrips=trips[trips$SameOrigAndDest=="true",]
+
+
+    intrazonalTrips=intrazonalTrips %>% 
+      within({ dist = case_when(t.tripLength > 0 ~ t.tripLength * 1.2,
+                                t.tripLength == 0 ~ case_when(t.m_main_agg == "Walk" ~ t.travelTime * (4.0/3.6), #average walk speed 4km/h
+                                                              t.m_main_agg == "Bike" ~ t.travelTime * (12.5/3.6), #average cycle speed 4km/h
+                                                              t.m_main_agg == "Car" ~ t.travelTime * (30.0/3.6), #average car speed 30 km/h
+                                                              t.m_main_agg == "Pt" ~ t.travelTime * (6.0/3.6)))}) #average pt speed km/h
+
+
+    intrazonalTrips=intrazonalTrips%>%
+      mutate(carSpeed_impute = predict(lm_carSpeed,intrazonalTrips),
+             ptSpeed_impute = predict(lm_ptSpeed,intrazonalTrips),
+             carTravelTime_sec = dist/carSpeed_impute,
+             ptTravelTime_sec = dist/ptSpeed_impute)
+
+
+    trips = trips%>%
+      rows_update(intrazonalTrips%>% 
+                    select(-carSpeed_impute, -ptSpeed_impute),by="t.ID")
+
 ## Write to CSV
 
-## MORE ANALYSIS TO FOLLOW; THIS IS NOT COMPLETE
+CODE NOT CURRENTLY IMPLEMENTED PENDING ABOVE (needs {r} added to
+codeblock)
+
+    # Get today's date
+    today <- format(Sys.Date(), "%Y_%m_%d")
+
+    # Add today's date as a suffix to the filename
+    filename <- paste0("trips_Melbourne_JIBE_", today, ".csv")
+
+    # Write to CSV with the updated filename
+    write.csv(trips, file = filename, row.names = FALSE)
 
 ## System information for the above analysis
 
