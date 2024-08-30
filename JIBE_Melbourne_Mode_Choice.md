@@ -335,7 +335,8 @@ mapping.
 ### Further trip cleaning prior to assignment, based on above review
 
 To ensure proper coding, `origplace1` will be recorded as work related
-(**for now, pending review with colleagues**)
+where origin purpose is ‘Work Related’ (**for now, pending review with
+colleagues**)
 
 ``` r
 trips[is.na(trips$origplace1) & trips$origpurp1=='Work Related','origplace1'] <- 'Workplace'
@@ -408,55 +409,91 @@ We have now imputed values for the NA places and purposes.
 
 ### Assign trip purpose for MITO
 
-trips \<- trips %\>% rename(origin=origplace1, destination=destplace1)
-%\>% within({ t.purpose = case_when( t.origin == “B” \| t.destination ==
-“B” ~ “business”, t.origin == “unknown” \| t.destination == “unknown” ~
-“unknown”, t.origin == “RRT” \| t.destination == “RRT” ~ “RRT”, t.origin
-== “H” ~ case_when( t.destination == “W” ~ “HBW”, t.destination == “E” ~
-“HBE”, t.destination == “A” ~ “HBA”, t.destination == “S” ~ “HBS”,
-t.destination == “R” ~ “HBR”, t.destination == “O” ~ “HBO”),
-t.destination == “H” ~ “NA”, \# return trip t.origin == “W” \|
-t.destination == “W” ~ “NHBW”, TRUE ~ “NHBO”)
+``` r
+trips <- trips %>% 
+  rename(origin=origplace1, destination=destplace1) %>% 
+  mutate(
+    purpose = case_when(
+      origin == "Place of Personal Business" | destination == "B" ~ "business",
+      origin %in% c("NA", "Not Stated") | is.na(origin) |
+      destination %in% c("NA", "Not Stated") | is.na(destination) ~ "unknown",
+      origin == "RRT" | destination == "RRT" ~ "RRT",
+      origin == "Accommodation" ~ case_when(
+      destination == "Workplace" ~ "HBW",
+      destination == "Education" ~ "HBE",
+      destination == "Shops" ~ "HBS",
+      destination %in% c(
+          "Natural Feature",
+          "Recreational Place",
+          "Social Place"
+        ) ~ "HBR",
+      destination == "Other" ~ "HBO",
+      destpurp1 == "Accompany Someone" ~ "HBA"),
+      destination == "Accommodation" ~ "NA",
+      origin == "Workplace" | destination == "Workplace" ~ "NHBW",
+      TRUE ~ "NHBO"
+    ),
+    full_purpose = case_when(
+      purpose == "NA" ~ case_when(
+      origin == "Workplace" ~ "HBW",
+      origin == "Place of Education" ~ "HBE",
+      origin == "Shops" ~ "HBS",
+      origin %in% c("Natural Feature","Recreational Place","Social Place") ~ "HBR",
+      origin == "Other" ~ "HBO",
+      destpurp1 == "Accompany Someone" ~ "HBA"),
+      TRUE ~ purpose
+    )
+  )
+```
 
-        ## Further define purpose for return trips
-        t.full_purpose = case_when(
-            t.purpose == "NA" ~ case_when(
-                t.origin == "W" ~ "HBW",
-                t.origin == "E" ~ "HBE",
-                t.origin == "A" ~ "HBA",
-                t.origin == "S" ~ "HBS",
-                t.origin == "R" ~ "HBR",
-                t.origin == "O" ~ "HBO"),
-            TRUE ~ t.purpose
-            )
+### Review the assigned trip purposes
 
-})
+``` r
+purpose.MITO <- trips$purpose %>% 
+    replace_na('slipped through cracks') %>%
+    table() %>%
+    sort(decreasing=TRUE,na.last=TRUE) %>%
+    as.data.frame() %>%
+    `colnames<-`(c('MITO Purpose','Count')) %>%
+    adorn_totals()
+kable(purpose.MITO)
+```
 
-#### HBW Home based work
+| MITO Purpose           |  Count |
+|:-----------------------|-------:|
+| NA                     |  79437 |
+| slipped through cracks |  39520 |
+| HBR                    |  21369 |
+| HBW                    |  18866 |
+| NHBO                   |  18112 |
+| HBS                    |  17293 |
+| NHBW                   |  14203 |
+| business               |   8299 |
+| HBA                    |   3519 |
+| HBO                    |   1199 |
+| unknown                |      2 |
+| Total                  | 221819 |
 
-#### HBE Home based education
-
-#### HBA Home based accompanying/escort trip
-
-#### HBS Home based shopping
-
-#### HBR Home based recreational
-
-#### HBO Home based other
-
-(e.g. health care, religious activity, visit friend/family)
-
-#### NHBW Non-home based work
-
-(e.g. from workplace to restaurant)
-
-#### NHBO Non-home based other
-
-(e.g. from supermarket to restaurant)
-
-#### RRT Round Trip
+THIS IS NOT YET READY; I BELIEVE THINGS FALLING THROUGH CRACKS
 
 ## Attach travel time
+
+# Car and pt travel time are simulated in MATSim using the recorded coordinates/zones of the trip origin and destination
+
+carTravelTime=read_csv(“data/melbourne/travelTime/carCongested_10perc.csv”)%\>%filter(Route==“carCongested”)
+ptTravelTime=read_csv(“data/melbourne/travelTime/ptTravelTime_matsim.csv”)
+
+trips = trips%\>%
+left_join(carTravelTime\[,c(“IDNumber”,“PersonNumber”,“TripNumber”,“time”,“dist”)\],by=c(“hh.id”=“IDNumber”,“p.id”=“PersonNumber”,“t.id”=“TripNumber”))%\>%
+left_join(ptTravelTime\[,c(“IDNumber”,“PersonNumber”,“TripNumber”,“totalTravelTime”)\],by=c(“hh.id”=“IDNumber”,“p.id”=“PersonNumber”,“t.id”=“TripNumber”))
+
+colnames(trips)\[which(names(trips) == “time”)\] = “carTravelTime_sec”
+colnames(trips)\[which(names(trips) == “totalTravelTime”)\] =
+“ptTravelTime_sec”
+
+trips$carTravelTime_sec = as.numeric(trips$carTravelTime_sec)
+trips$ptTravelTime_sec = as.numeric(trips$ptTravelTime_sec)
+trips$dist = as.numeric(trips$dist)
 
 ## Filter out invalid trips records
 

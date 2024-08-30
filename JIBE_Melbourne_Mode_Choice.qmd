@@ -178,7 +178,7 @@ For now, I think I will derive a MITO purpose using origin, destination and dest
 
 ### Further trip cleaning prior to assignment, based on above review
 
-To ensure proper coding, `origplace1` will be recorded as work related (**for now, pending review with colleagues**)
+To ensure proper coding, `origplace1` will be recorded as work related where origin purpose is 'Work Related' (**for now, pending review with colleagues**)
 ```{r}
 trips[is.na(trips$origplace1) & trips$origpurp1=='Work Related','origplace1'] <- 'Workplace'
 ```
@@ -220,41 +220,57 @@ We have now imputed values for the NA places and purposes.
 ### Assign trip purpose for MITO
 ```{r}
 trips <- trips %>% 
-    rename(origin=origplace1, destination=destplace1) %>%
-    within({
-        trips.purpose = case_when(
-        trips.origin == "Place of Personal Business" | trips.destination == "B" ~ "business", ## is this right?
-        trips.origin %in% c("NA", "Not Stated")          | 
-            is.NA(trips.origin) ~ "unknown"            |
-            trips.destination %in% c("NA", "Not Stated") | 
-            is.NA(trips.destination) 
-              ~ "unknown",
-        trips.origin == "RRT" | trips.destination == "RRT" ~ "RRT", ## This case doesn't exist in our data 
-        trips.origin == "Accommodation" ~ case_when(
-            trips.destination == "Workplace" ~ "HBW", 
-            trips.destination == "Education" ~ "HBE",
-            trips.destination == "Shops" ~ "HBS",
-            trips.destination %in% c("Natural Feature","Recreational Place","Social Place") ~ "HBR",
-            trips.destination == "Other" ~ "HBO",
-            trips.destpurp1 == "Accompany Someone" ~ "HBA",  ## Should we use purpose of 'Accompany Someone', even if Destination suggests something else? 
-            ),
-        trips.destination == "Accommodation" ~ "NA", # return trip
-        trips.origin == "Workplace" | trips.destination == "Workplace" ~ "NHBW",
-        TRUE ~ "NHBO")
-    
-        ## Further define purpose for return trips
-        trips.full_purpose = case_when(
-            trips.purpose == "NA" ~ case_when(
-                trips.origin == "Workplace" ~ "HBW",
-                trips.origin == "Place of Education" ~ "HBE",
-                trips.origin == "Shops" ~ "HBS",
-                trips.origin %in% c("Natural Feature","Recreational Place","Social Place") ~ "HBR",
-                trips.origin == "Other" ~ "HBO",
-                trips.destpurp1 == "Accompany Someone" ~ "HBA"),
-            TRUE ~ trips.purpose
-            )
-})
+  rename(origin=origplace1, destination=destplace1) %>% 
+  mutate(
+    purpose = case_when(
+      origin == "Place of Personal Business" | destination == "B" ~ "business",
+      origin %in% c("NA", "Not Stated") | is.na(origin) |
+      destination %in% c("NA", "Not Stated") | is.na(destination) ~ "unknown",
+      origin == "RRT" | destination == "RRT" ~ "RRT",
+      origin == "Accommodation" ~ case_when(
+      destination == "Workplace" ~ "HBW",
+      destination == "Education" ~ "HBE",
+      destination == "Shops" ~ "HBS",
+      destination %in% c(
+          "Natural Feature",
+          "Recreational Place",
+          "Social Place"
+        ) ~ "HBR",
+      destination == "Other" ~ "HBO",
+      destpurp1 == "Accompany Someone" ~ "HBA"),
+      destination == "Accommodation" ~ "NA",
+      origin == "Workplace" | destination == "Workplace" ~ "NHBW",
+      TRUE ~ "NHBO"
+    ),
+    full_purpose = case_when(
+      purpose == "NA" ~ case_when(
+      origin == "Workplace" ~ "HBW",
+      origin == "Place of Education" ~ "HBE",
+      origin == "Shops" ~ "HBS",
+      origin %in% c("Natural Feature","Recreational Place","Social Place") ~ "HBR",
+      origin == "Other" ~ "HBO",
+      destpurp1 == "Accompany Someone" ~ "HBA"),
+      TRUE ~ purpose
+    )
+  )
 ```
+
+### Review the assigned trip purposes
+```{r}
+#| output: true
+#| label: tbl-purpose-categories.MITO
+purpose.MITO <- trips$purpose %>% 
+    replace_na('slipped through cracks') %>%
+    table() %>%
+    sort(decreasing=TRUE,na.last=TRUE) %>%
+    as.data.frame() %>%
+    `colnames<-`(c('MITO Purpose','Count')) %>%
+    adorn_totals()
+kable(purpose.MITO)
+```
+
+THIS IS NOT YET READY; I BELIEVE THINGS FALLING THROUGH CRACKS
+
 ## Attach travel time 
 # Car and pt travel time are simulated in MATSim using the recorded coordinates/zones of the trip origin and destination
 
