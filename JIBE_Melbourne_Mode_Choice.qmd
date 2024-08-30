@@ -219,37 +219,34 @@ We have now imputed values for the NA places and purposes.
 
 ### Assign trip purpose for MITO
 ```{r}
-trips <- trips %>%   rename(origin=origplace1, destination=destplace1)
+trips <- trips %>%   rename(origin=origpurp1, destination=destpurp1)
 trips <- trips %>% 
   mutate(
     purpose = case_when(
-      origin == "Place of Personal Business" | destination == "B" ~ "business",
-      origin %in% c("NA", "Not Stated") | is.na(origin) |
-      destination %in% c("NA", "Not Stated") | is.na(destination) ~ "unknown",
-      origin == "RRT" | destination == "RRT" ~ "RRT",
-      origin == "Accommodation" ~ case_when(
-      destination == "Workplace" ~ "HBW",
-      destination == "Place of Education" ~ "HBE",
-      destination == "Shops" ~ "HBS",
-      destination %in% c(
-          "Natural Feature",
-          "Recreational Place",
-          "Social Place"
-        ) ~ "HBR",
-      destination == "Other" ~ "HBO",
-      destpurp1 == "Accompany Someone" ~ "HBA"),
-      destination == "Accommodation" ~ "NA",
-      origin == "Workplace" | destination == "Workplace" ~ "NHBW",
+      origin == "Personal Business" | destination == "Personal Business" ~ "business",
+      origin %in% c("Unknown Purpose (at start of day)", "Not Stated") | 
+        destination %in% c("NA", "Not Stated") ~ "unknown",
+      origin == "At Home" & destination == "At or Go Home" ~ "RRT",
+      origin == "At Home" ~ case_when(
+        destination == "Work Related" ~ "HBW",
+        destination == "Education" ~ "HBE",
+        destination == "Buy Something" ~ "HBS",
+        destination == "Recreational" ~ "HBR",
+        destination == "Other Purpose" ~ "HBO",
+        destination == "Accompany Someone" ~ "HBA"
+      ),
+      destination == "At or Go Home" ~ "NA",
+      origin == "Work Related" | destination == "Work Related" ~ "NHBW",
       TRUE ~ "NHBO"
     ),
     full_purpose = case_when(
       purpose == "NA" ~ case_when(
-      origin == "Workplace" ~ "HBW",
-      origin == "Place of Education" ~ "HBE",
-      origin == "Shops" ~ "HBS",
-      origin %in% c("Natural Feature","Recreational Place","Social Place") ~ "HBR",
-      origin == "Other" ~ "HBO",
-      destpurp1 == "Accompany Someone" ~ "HBA"),
+      origin == "Work Related" ~ "HBW",
+      origin == "Education" ~ "HBE",
+      origin == "Buy Something" ~ "HBS",
+      origin == "Recreational" ~ "HBR",
+      origin == "Other Purpose" ~ "HBO",
+      origin == "Accompany Someone" ~ "HBA"),
       TRUE ~ purpose
     )
   )
@@ -276,7 +273,7 @@ This is a tast of what various classifications currently look like:
 'slipped through the cracks'
 ```{r}
 #| output: true
-trips[is.na(trips$purpose),c('origin','destination','origpurp1','destpurp1')] %>% 
+trips[is.na(trips$purpose),c('origin','destination','origplace1','destplace1')] %>% 
   table() %>% 
   as.data.frame() %>% 
   arrange(desc(Freq)) %>%
