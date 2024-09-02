@@ -13,7 +13,7 @@ knitr:
 
 To conduct the JIBE mode choice modelling for Melbourne requires data preparation using travel survey data. The analysis draws on the [Victorian Integrated Survey of Travel and Activity](https://www.vic.gov.au/victorian-integrated-survey-travel-and-activity) (VISTA[^1]) for 2012-20, used with permission from the Victorian Department of Transport.
 
-The analysis is conducted for the JIBE project by Carl Higgs in August/September 2024, in coordination with Dr Qin Zhang, Corin Staves and Dr Belen Zapata-Diomedi.
+The analysis is conducted for the JIBE project by Carl Higgs (VISTA data preparation) and Mahsa Abdollahyar (travel time estimation) in August/September 2024, in coordination with Dr Qin Zhang, Corin Staves and Dr Belen Zapata-Diomedi.
 
 It expands on an [earlier mode choice analysis](https://github.com/carlhiggs/multimodal_analysis_example) demonstration using the VISTA travel survey using the [Rapid Realisting Routing with R5 (r5r)](https://ipeagit.github.io/r5r/) routing engine, conducted by Carl Higgs for the JIBE project in March 2022 on behalf of Dr Tayebeh Saghapour.  This was subsequently [adapted](https://github.com/jibeproject/odCalculationsMelbourne) by Dr Alan Both for the JIBE project in February 2024.
 
@@ -61,7 +61,7 @@ Trips will be classified using a standard abbreviation schema, as advised by Dr 
 | HBO            | Home based other (e.g. health care, religious activity, visit friend/family) |
 | NHBW           | Non-home based work (e.g. from workplace to restaurant) |
 | NHBO           | Non-home based other (e.g. from supermarket to restaurant) |
-| RRT            | Round Trip |
+| RRT            | Recreational Round Trip |
 
 ## Data preparation
 ### Read data
@@ -172,9 +172,72 @@ One of these had a recorded origin of 'Transport Feature' (purpose: to 'Pick-up 
 
 The other is similar: from Workplace (purpose NA) to Place of Education (purpose: Education).  That's a 'Non-home based work' trip' (there isn't a non-home based education trip in the above classification schema, so the choice is easy).
 
-_**The question is**: do we derive trip purpose using destinations like in the TRADS example, or do we adapt the given VISTA purposes (and perhaps, just the destination purpose as that's really the reason for the trip)?_
+Following this review, and below stated considerations, it was determined to identify MITO purpose using origin and destination places and purposes, as required to approximate the required categories.
 
-For now, I think I will derive a MITO purpose using origin, destination and destination purpose.  We can always revise the classification mapping.
+### Other considerations
+
+_(following e-mail discussion with Corin 2024-08-31)_
+We are interested in recreational round-trips (RRTs), where these involve going for a walk/ride and returning back to the origin without reaching any other destination (e.g., going for a run, walking the dog). 
+
+To better understand where these kind of trips may be being classified in Vista, we can list the distinct categories in the `origpurp2` variables:
+
+```{r}
+#| output: true
+
+purpose_detail<- full_join(
+  trips$origpurp2%>%replace_na('NA')%>%table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Purpose','Start (n)')),
+  trips$destpurp2%>%replace_na('NA')%>%table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Purpose','End (n)'))
+  )%>%adorn_totals()
+kable(purpose_detail)
+```
+
+So, we see 'Walked the dog was cited approximate 3,500 times as a purpose for origin and destination.  To see how such trips may be referenced using the higher level purpose and place variables, let's explore more:
+
+```{r}
+#| output: true
+survey$T[survey$T$origpurp2=="Walked the dog","origpurp1"] %>% table()%>%sort(decreasing=TRUE,na.last=TRUE)%>% kable()
+```
+
+So, 'walked the dog' is an example of what someone may conduct as 'personal business'
+
+```{r}
+#| output: true
+survey$T[survey$T$origpurp2=="Walked the dog",c("destpurp2")] %>% table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Purpose','End (n)')) %>%adorn_totals() %>% kable()
+```
+
+The most common purpose of someone conducting personal business to walk the dog is to 'Go home' (likely a recreational round trip, but identifying the broader pattern requires further investigation).  Another destination purpose is 'Walked the dog', what are the places associated with such a double coding?
+
+```{r}
+#| output: true
+ (survey$T %>% filter(survey$T$origpurp2=="Walked the dog" & survey$T$destpurp2=="Walked the dog"))[c("origplace1","destplace2")] %>% table() %>% kable()
+```
+
+So, these are examples of walking to some location to walk a dog and presumably, these are middle segments of larger trip chains where people have left home to walk the dog, and subsequently return home from walking the dog.  In other words, these likely are examples of recreational round trips (arguably); how could that be captured, or should it?  Maybe not in the case of someone else's home, but perhaps 'Recreational NEC' is simply walking the dog in the middle of a recreational round trip involving that activity.
+
+I believe (from exploration not recorded here) it hints at the general pattern of recreational round trips where these are recorded across multiple legs of trip IDs, 
+e.g.
+
+| Event | tripno|origpurp1         |destpurp1     |origpurp2      |destpurp2 |origplace1         |destplace1    |
+|------:|------:|:-----------------|:-------------|:--------------|:---------|:------------------|:-------------|
+| Commence RRT |    `j` |**At Home**   |_Personal Business_ |At home   |Walked the dog |Accommodation |*Recreational Place* |
+| Return leg of RRT |  `j+1`| _Personal Business_ |**At or Go Home** |Walked the dog |Go home   |**Recreational Place** |Accommodation |
+
+I believe the above is the pattern of an RRT, where there are 
+
+- two consecutive `tripid` within the one persid
+- first has `origpurp1`=='At Home', `destpurp1`== 'Personal Business' and `destplace1` of 'Recreational Place'
+- second has `origplace1`=='Recreational Place',`origpurp1`== 'Personal Business' and `destpurp1`=='At or Go Home'
+
+This would be expected to be a more general case than simply walking a dog; e.g. going for a walk in general, or a bike ride; i.e. the intent of RRT.  It is plausible that there could be other purposes than personal business this round trip pattern could be classified under.
+
+The high level destination of 'Recreational Place' is too vague (e.g. includes Gym or Racecourses); the lower-level identifier of 'Recrational NEC' is the more useful, and most common one in this scenario -- I believe it implies, a trip for its own recreational purposes.
+
+```{r}
+#| output: true
+ (survey$T %>% filter(survey$T$origpurp1=='At Home' & survey$T$destplace1=='Recreational Place'))['destplace2'] %>% table() %>% sort(decreasing=TRUE,na.last=TRUE) %>% kable()
+```
+
+I am not sure off hand how best to classify this multi-trip paradigm, that is distinct from other single trip classifications, in code. ** @CorinStaves and @Qinnnnn, keen to hear your thoughts on this! **.
 
 ### Further trip cleaning prior to assignment, based on above review
 
@@ -218,12 +281,14 @@ kable(purpose %>% replace(is.na(.), 0)) # NA counts are really zeroes
 We have now imputed values for the NA places and purposes.
 
 ### Assign trip purpose for MITO
+
+_RRT identification, as per considerations listed above, is not yet implemented_
+
 ```{r}
 trips <- trips %>%   rename(origin=origpurp1, destination=destpurp1)
 trips <- trips %>% 
   mutate(
     purpose = case_when(
-      origin == "Personal Business" | destination == "Personal Business" ~ "business",
       origin %in% c("Unknown Purpose (at start of day)", "Not Stated") | 
         destination %in% c("NA", "Not Stated") ~ "unknown",
       origin == "At Home" & destination == "At or Go Home" ~ "RRT",
@@ -239,7 +304,6 @@ trips <- trips %>%
         destplace1 == "Place of Education" ~ "HBE",
         destplace1 == "Shops" ~ "HBS",
         destplace1 %in% c("Recreational Place","Natural Feature", "Social Place") ~ "HBR",
-        destplace1 == "Place of Personal Business" ~ "business",
         destplace1 %in% c("Accommodation","Change Mode","Transport Feature", "Other") ~ "HBO"
       ),
       destination == "At or Go Home" ~ "NA",
@@ -247,13 +311,25 @@ trips <- trips %>%
       TRUE ~ "NHBO"
     ),
     full_purpose = case_when(
-      purpose == "NA" ~ case_when(
-      origin == "Work Related" ~ "HBW",
-      origin == "Education" ~ "HBE",
-      origin == "Buy Something" ~ "HBS",
-      origin == "Recreational" ~ "HBR",
-      origin == "Other Purpose" ~ "HBO",
-      origin %in% c("Accompany Someone","Pick-up or Drop-off Someone") ~ "HBA"),
+        destination %in% c("Unknown Purpose (at start of day)", "Not Stated") | 
+          origin %in% c("NA", "Not Stated") ~ "unknown",
+        destination == "At Home" & origin == "At or Go Home" ~ "RRT",
+        destination == "At Home" ~ case_when(
+          origin == "Work Related" ~ "HBW",
+          origin == "Education" ~ "HBE",
+          origin == "Buy Something" ~ "HBS",
+          origin == "Recreational" ~ "HBR",
+          origin == "Other Purpose" ~ "HBO",
+          origin %in% c("Accompany Someone","Pick-up or Drop-off Someone") ~ "HBA",
+          # Classify remaining trips using place information if clearer than purpose
+          origplace1 == "Workplace" ~ "HBW",
+          origplace1 == "Place of Education" ~ "HBE",
+          origplace1 == "Shops" ~ "HBS",
+          origplace1 %in% c("Recreational Place","Natural Feature", "Social Place") ~ "HBR",
+          origplace1 %in% c("Accommodation","Change Mode","Transport Feature", "Other") ~ "HBO"
+        ),
+        origin == "At or Go Home" ~ "NA",
+        destination == "Work Related" | origin == "Work Related" ~ "NHBW",
       TRUE ~ purpose
     )
   )
@@ -273,7 +349,7 @@ purpose.MITO <- trips$purpose %>%
 kable(purpose.MITO)
 ```
 
-
+(_RRT classification method not yet correctly implemented_)
 
 ## Attach travel time 
 Car and pt travel time are simulated in MATSim using the recorded coordinates/zones of the trip origin and destination

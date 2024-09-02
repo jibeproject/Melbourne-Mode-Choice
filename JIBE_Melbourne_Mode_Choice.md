@@ -10,7 +10,8 @@ Activity](https://www.vic.gov.au/victorian-integrated-survey-travel-and-activity
 (VISTA[^1]) for 2012-20, used with permission from the Victorian
 Department of Transport.
 
-The analysis is conducted for the JIBE project by Carl Higgs in
+The analysis is conducted for the JIBE project by Carl Higgs (VISTA data
+preparation) and Mahsa Abdollahyar (travel time estimation) in
 August/September 2024, in coordination with Dr Qin Zhang, Corin Staves
 and Dr Belen Zapata-Diomedi.
 
@@ -80,17 +81,17 @@ conflict_prefer("lag", "dplyr")
 Trips will be classified using a standard abbreviation schema, as
 advised by Dr Qin Zhang and Corin Staves [^2] [^3] [^4]
 
-| Classification | Description                                                                  |
-|:---------------|:-----------------------------------------------------------------------------|
-| HBW            | Home based work                                                              |
-| HBE            | Home based education                                                         |
-| HBA            | Home based accompanying/escort trip                                          |
-| HBS            | Home based shopping                                                          |
-| HBR            | Home based recreational                                                      |
-| HBO            | Home based other (e.g. health care, religious activity, visit friend/family) |
-| NHBW           | Non-home based work (e.g. from workplace to restaurant)                      |
-| NHBO           | Non-home based other (e.g. from supermarket to restaurant)                   |
-| RRT            | Round Trip                                                                   |
+| Classification | Description |
+|:---|:---|
+| HBW | Home based work |
+| HBE | Home based education |
+| HBA | Home based accompanying/escort trip |
+| HBS | Home based shopping |
+| HBR | Home based recreational |
+| HBO | Home based other (e.g. health care, religious activity, visit friend/family) |
+| NHBW | Non-home based work (e.g. from workplace to restaurant) |
+| NHBO | Non-home based other (e.g. from supermarket to restaurant) |
+| RRT | Recreational Round Trip |
 
 ## Data preparation
 
@@ -323,14 +324,197 @@ The other is similar: from Workplace (purpose NA) to Place of Education
 a non-home based education trip in the above classification schema, so
 the choice is easy).
 
-***The question is**: do we derive trip purpose using destinations like
-in the TRADS example, or do we adapt the given VISTA purposes (and
-perhaps, just the destination purpose as that’s really the reason for
-the trip)?*
+Following this review, and below stated considerations, it was
+determined to identify MITO purpose using origin and destination places
+and purposes, as required to approximate the required categories.
 
-For now, I think I will derive a MITO purpose using origin, destination
-and destination purpose. We can always revise the classification
-mapping.
+### Other considerations
+
+*(following e-mail discussion with Corin 2024-08-31)* We are interested
+in recreational round-trips (RRTs), where these involve going for a
+walk/ride and returning back to the origin without reaching any other
+destination (e.g., going for a run, walking the dog).
+
+To better understand where these kind of trips may be being classified
+in Vista, we can list the distinct categories in the `origpurp2`
+variables:
+
+``` r
+purpose_detail<- full_join(
+  trips$origpurp2%>%replace_na('NA')%>%table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Purpose','Start (n)')),
+  trips$destpurp2%>%replace_na('NA')%>%table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Purpose','End (n)'))
+  )%>%adorn_totals()
+kable(purpose_detail)
+```
+
+| Purpose                                   | Start (n) | End (n) |
+|:------------------------------------------|----------:|--------:|
+| At home                                   |     87031 |      NA |
+| Bought something                          |     23621 |   23627 |
+| Own Workplace                             |     22625 |   22638 |
+| Someone picked-up or delivered            |     15347 |   15372 |
+| Ate or drank                              |     10017 |   10026 |
+| Visited someone                           |      9466 |    9602 |
+| Other recreational (eg. exercise)         |      8911 |    8984 |
+| Accompanied someone                       |      7576 |    7671 |
+| At school                                 |      7170 |    7064 |
+| Employer’s Business                       |      5823 |    5830 |
+| Walked the dog                            |      3533 |    3563 |
+| Something picked-up or delivered for Home |      3120 |      NA |
+| Medical/Dental purposes                   |      2487 |    2490 |
+| Unknown (at start of day)                 |      1832 |      NA |
+| Personal business (eg banking)            |      1733 |    1744 |
+| Social (NEC)                              |      1585 |    1623 |
+| Participated in sport                     |      1390 |    1388 |
+| Religious activity                        |      1215 |    1214 |
+| Personal Business (NEC)                   |      1182 |    1183 |
+| Recreational (NEC)                        |      1124 |    1149 |
+| At Uni/Tech                               |       873 |    1001 |
+| Watched concert, movies etc               |       788 |     791 |
+| Watched sport                             |       727 |     728 |
+| Other (NEC)                               |       686 |     696 |
+| Volunteer/Community activity              |       412 |     412 |
+| NA                                        |       315 |       2 |
+| Stayed overnight                          |       287 |    1912 |
+| Education (NEC)                           |       222 |     215 |
+| Met/waited for someone                    |       189 |     188 |
+| Socialised (Pubs, Clubs etc)              |       175 |     174 |
+| Browsing, window-shopping                 |       121 |     121 |
+| Participated in concert,musical,band etc  |       104 |     104 |
+| At other house                            |        74 |      93 |
+| At childcare                              |        24 |      24 |
+| Work purposes (NEC)                       |        12 |      NA |
+| Change Mode (NEC)                         |         8 |     139 |
+| Something picked-up or delivered for Work |         5 |       5 |
+| Not Stated                                |         4 |       2 |
+| Parked or unparked a vehicle              |         4 |      NA |
+| At other Post-Secondary Study             |         1 |       1 |
+| Go home                                   |        NA |   86905 |
+| Something picked-up or delivered for home |        NA |    3122 |
+| Work-Related (NEC)                        |        NA |      12 |
+| Not Applicable                            |        NA |       3 |
+| Got on or off PT                          |        NA |       1 |
+| Total                                     |    221819 |  221819 |
+
+So, we see ’Walked the dog was cited approximate 3,500 times as a
+purpose for origin and destination. To see how such trips may be
+referenced using the higher level purpose and place variables, let’s
+explore more:
+
+``` r
+survey$T[survey$T$origpurp2=="Walked the dog","origpurp1"] %>% table()%>%sort(decreasing=TRUE,na.last=TRUE)%>% kable()
+```
+
+|                   |    x |
+|:------------------|-----:|
+| Personal Business | 3533 |
+
+So, ‘walked the dog’ is an example of what someone may conduct as
+‘personal business’
+
+``` r
+survey$T[survey$T$origpurp2=="Walked the dog",c("destpurp2")] %>% table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Purpose','End (n)')) %>%adorn_totals() %>% kable()
+```
+
+| Purpose                                   | End (n) |
+|:------------------------------------------|--------:|
+| Go home                                   |    3308 |
+| Bought something                          |      52 |
+| Stayed overnight                          |      43 |
+| Visited someone                           |      33 |
+| Ate or drank                              |      23 |
+| Someone picked-up or delivered            |      13 |
+| Own Workplace                             |      10 |
+| Something picked-up or delivered for home |       9 |
+| Walked the dog                            |       9 |
+| Personal business (eg banking)            |       8 |
+| Other (NEC)                               |       6 |
+| Accompanied someone                       |       4 |
+| At other house                            |       4 |
+| Personal Business (NEC)                   |       4 |
+| Employer’s Business                       |       2 |
+| Other recreational (eg. exercise)         |       2 |
+| Recreational (NEC)                        |       2 |
+| At school                                 |       1 |
+| Total                                     |    3533 |
+
+The most common purpose of someone conducting personal business to walk
+the dog is to ‘Go home’ (likely a recreational round trip, but
+identifying the broader pattern requires further investigation). Another
+destination purpose is ‘Walked the dog’, what are the places associated
+with such a double coding?
+
+``` r
+ (survey$T %>% filter(survey$T$origpurp2=="Walked the dog" & survey$T$destpurp2=="Walked the dog"))[c("origplace1","destplace2")] %>% table() %>% kable()
+```
+
+|  | Park | Recreational NEC | Someone Else’s Home | Sport Ground or Oval |
+|:---|---:|---:|---:|---:|
+| Natural Feature | 2 | 0 | 0 | 0 |
+| Other | 0 | 0 | 2 | 0 |
+| Recreational Place | 0 | 3 | 0 | 2 |
+
+So, these are examples of walking to some location to walk a dog and
+presumably, these are middle segments of larger trip chains where people
+have left home to walk the dog, and subsequently return home from
+walking the dog. In other words, these likely are examples of
+recreational round trips (arguably); how could that be captured, or
+should it? Maybe not in the case of someone else’s home, but perhaps
+‘Recreational NEC’ is simply walking the dog in the middle of a
+recreational round trip involving that activity.
+
+I believe (from exploration not recorded here) it hints at the general
+pattern of recreational round trips where these are recorded across
+multiple legs of trip IDs, e.g.
+
+| Event | tripno | origpurp1 | destpurp1 | origpurp2 | destpurp2 | origplace1 | destplace1 |
+|---:|---:|:---|:---|:---|:---|:---|:---|
+| Commence RRT | `j` | **At Home** | *Personal Business* | At home | Walked the dog | Accommodation | *Recreational Place* |
+| Return leg of RRT | `j+1` | *Personal Business* | **At or Go Home** | Walked the dog | Go home | **Recreational Place** | Accommodation |
+
+I believe the above is the pattern of an RRT, where there are
+
+- two consecutive `tripid` within the one persid
+- first has `origpurp1`==‘At Home’, `destpurp1`== ‘Personal Business’
+  and `destplace1` of ‘Recreational Place’
+- second has `origplace1`==‘Recreational Place’,`origpurp1`== ‘Personal
+  Business’ and `destpurp1`==‘At or Go Home’
+
+This would be expected to be a more general case than simply walking a
+dog; e.g. going for a walk in general, or a bike ride; i.e. the intent
+of RRT. It is plausible that there could be other purposes than personal
+business this round trip pattern could be classified under.
+
+The high level destination of ‘Recreational Place’ is too vague
+(e.g. includes Gym or Racecourses); the lower-level identifier of
+‘Recrational NEC’ is the more useful, and most common one in this
+scenario – I believe it implies, a trip for its own recreational
+purposes.
+
+``` r
+ (survey$T %>% filter(survey$T$origpurp1=='At Home' & survey$T$destplace1=='Recreational Place'))['destplace2'] %>% table() %>% sort(decreasing=TRUE,na.last=TRUE) %>% kable()
+```
+
+| destplace2           | Freq |
+|:---------------------|-----:|
+| Recreational NEC     | 4726 |
+| Gym                  | 1397 |
+| Sport Ground or Oval | 1381 |
+| Swimming Pool        |  880 |
+| Other Indoor Sport   |  733 |
+| Golf                 |  331 |
+| Tennis Court         |  240 |
+| Other Outdoor Sport  |  135 |
+| Lawn Bowls           |  112 |
+| Racecourse           |   61 |
+| Other Water Sport    |   29 |
+| Skating Rink         |   11 |
+| Tenpin Bowling       |    9 |
+| Squash Court         |    6 |
+
+I am not sure off hand how best to classify this multi-trip paradigm,
+that is distinct from other single trip classifications, in code. \*\*
+@CorinStaves and @Qinnnnn, keen to hear your thoughts on this! \*\*.
 
 ### Further trip cleaning prior to assignment, based on above review
 
@@ -409,12 +593,14 @@ We have now imputed values for the NA places and purposes.
 
 ### Assign trip purpose for MITO
 
+*RRT identification, as per considerations listed above, is not yet
+implemented*
+
 ``` r
 trips <- trips %>%   rename(origin=origpurp1, destination=destpurp1)
 trips <- trips %>% 
   mutate(
     purpose = case_when(
-      origin == "Personal Business" | destination == "Personal Business" ~ "business",
       origin %in% c("Unknown Purpose (at start of day)", "Not Stated") | 
         destination %in% c("NA", "Not Stated") ~ "unknown",
       origin == "At Home" & destination == "At or Go Home" ~ "RRT",
@@ -430,7 +616,6 @@ trips <- trips %>%
         destplace1 == "Place of Education" ~ "HBE",
         destplace1 == "Shops" ~ "HBS",
         destplace1 %in% c("Recreational Place","Natural Feature", "Social Place") ~ "HBR",
-        destplace1 == "Place of Personal Business" ~ "business",
         destplace1 %in% c("Accommodation","Change Mode","Transport Feature", "Other") ~ "HBO"
       ),
       destination == "At or Go Home" ~ "NA",
@@ -438,13 +623,25 @@ trips <- trips %>%
       TRUE ~ "NHBO"
     ),
     full_purpose = case_when(
-      purpose == "NA" ~ case_when(
-      origin == "Work Related" ~ "HBW",
-      origin == "Education" ~ "HBE",
-      origin == "Buy Something" ~ "HBS",
-      origin == "Recreational" ~ "HBR",
-      origin == "Other Purpose" ~ "HBO",
-      origin %in% c("Accompany Someone","Pick-up or Drop-off Someone") ~ "HBA"),
+        destination %in% c("Unknown Purpose (at start of day)", "Not Stated") | 
+          origin %in% c("NA", "Not Stated") ~ "unknown",
+        destination == "At Home" & origin == "At or Go Home" ~ "RRT",
+        destination == "At Home" ~ case_when(
+          origin == "Work Related" ~ "HBW",
+          origin == "Education" ~ "HBE",
+          origin == "Buy Something" ~ "HBS",
+          origin == "Recreational" ~ "HBR",
+          origin == "Other Purpose" ~ "HBO",
+          origin %in% c("Accompany Someone","Pick-up or Drop-off Someone") ~ "HBA",
+          # Classify remaining trips using place information if clearer than purpose
+          origplace1 == "Workplace" ~ "HBW",
+          origplace1 == "Place of Education" ~ "HBE",
+          origplace1 == "Shops" ~ "HBS",
+          origplace1 %in% c("Recreational Place","Natural Feature", "Social Place") ~ "HBR",
+          origplace1 %in% c("Accommodation","Change Mode","Transport Feature", "Other") ~ "HBO"
+        ),
+        origin == "At or Go Home" ~ "NA",
+        destination == "Work Related" | origin == "Work Related" ~ "NHBW",
       TRUE ~ purpose
     )
   )
@@ -463,21 +660,23 @@ purpose.MITO <- trips$purpose %>%
 kable(purpose.MITO)
 ```
 
-| MITO Purpose |  Count |
-|:-------------|-------:|
-| NA           |  78543 |
-| NHBO         |  24868 |
-| business     |  23922 |
-| HBW          |  19067 |
-| HBA          |  15321 |
-| NHBW         |  15293 |
-| HBR          |  15212 |
-| HBS          |  14305 |
-| HBE          |   7388 |
-| HBO          |   6048 |
-| unknown      |   1760 |
-| RRT          |     92 |
-| Total        | 221819 |
+| MITO Purpose           |  Count |
+|:-----------------------|-------:|
+| NA                     |  86123 |
+| NHBO                   |  30777 |
+| HBW                    |  19145 |
+| HBR                    |  18511 |
+| NHBW                   |  16050 |
+| HBA                    |  15321 |
+| HBS                    |  14628 |
+| HBE                    |   7721 |
+| HBO                    |   7286 |
+| slipped through cracks |   4325 |
+| unknown                |   1840 |
+| RRT                    |     92 |
+| Total                  | 221819 |
+
+(*RRT classification method not yet correctly implemented*)
 
 ## Attach travel time
 
