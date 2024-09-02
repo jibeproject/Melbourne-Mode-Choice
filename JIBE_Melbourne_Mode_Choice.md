@@ -397,9 +397,13 @@ kable(purpose_detail)
 | Total                                     |    221819 |  221819 |
 
 So, we see ’Walked the dog was cited approximate 3,500 times as a
-purpose for origin and destination. To see how such trips may be
-referenced using the higher level purpose and place variables, let’s
-explore more:
+purpose for origin and destination.
+
+(*incidentally, the purpose category ‘Employer’s business’ likely
+matches intent of the MITO categories*)
+
+To see how such trips may be referenced using the higher level purpose
+and place variables, let’s explore more:
 
 ``` r
 survey$T[survey$T$origpurp2=="Walked the dog","origpurp1"] %>% table()%>%sort(decreasing=TRUE,na.last=TRUE)%>% kable()
@@ -469,7 +473,7 @@ multiple legs of trip IDs, e.g.
 
 | Event | tripno | origpurp1 | destpurp1 | origpurp2 | destpurp2 | origplace1 | destplace1 |
 |---:|---:|:---|:---|:---|:---|:---|:---|
-| Commence RRT | `j` | **At Home** | *Personal Business* | At home | Walked the dog | Accommodation | *Recreational Place* |
+| Commence RRT | `j` | **At Home** | *Personal Business* | At home | Walked the dog | Accommodation | **Recreational Place** |
 | Return leg of RRT | `j+1` | *Personal Business* | **At or Go Home** | Walked the dog | Go home | **Recreational Place** | Accommodation |
 
 I believe the above is the pattern of an RRT, where there are
@@ -601,6 +605,7 @@ trips <- trips %>%   rename(origin=origpurp1, destination=destpurp1)
 trips <- trips %>% 
   mutate(
     purpose = case_when(
+      origpurp2 == "Employer's Business" | destpurp2 == "Employer's Business" ~ "business",
       origin %in% c("Unknown Purpose (at start of day)", "Not Stated") | 
         destination %in% c("NA", "Not Stated") ~ "unknown",
       origin == "At Home" & destination == "At or Go Home" ~ "RRT",
@@ -662,17 +667,18 @@ kable(purpose.MITO)
 
 | MITO Purpose           |  Count |
 |:-----------------------|-------:|
-| NA                     |  86123 |
+| NA                     |  83858 |
 | NHBO                   |  30777 |
-| HBW                    |  19145 |
 | HBR                    |  18511 |
-| NHBW                   |  16050 |
+| HBW                    |  16925 |
 | HBA                    |  15321 |
 | HBS                    |  14628 |
+| NHBW                   |  10498 |
+| business               |  10078 |
 | HBE                    |   7721 |
 | HBO                    |   7286 |
 | slipped through cracks |   4325 |
-| unknown                |   1840 |
+| unknown                |   1799 |
 | RRT                    |     92 |
 | Total                  | 221819 |
 

@@ -191,7 +191,11 @@ purpose_detail<- full_join(
 kable(purpose_detail)
 ```
 
-So, we see 'Walked the dog was cited approximate 3,500 times as a purpose for origin and destination.  To see how such trips may be referenced using the higher level purpose and place variables, let's explore more:
+So, we see 'Walked the dog was cited approximate 3,500 times as a purpose for origin and destination. 
+
+(_incidentally, the purpose category 'Employer's business' likely matches intent of the MITO categories_)
+
+To see how such trips may be referenced using the higher level purpose and place variables, let's explore more:
 
 ```{r}
 #| output: true
@@ -219,7 +223,7 @@ e.g.
 
 | Event | tripno|origpurp1         |destpurp1     |origpurp2      |destpurp2 |origplace1         |destplace1    |
 |------:|------:|:-----------------|:-------------|:--------------|:---------|:------------------|:-------------|
-| Commence RRT |    `j` |**At Home**   |_Personal Business_ |At home   |Walked the dog |Accommodation |*Recreational Place* |
+| Commence RRT |    `j` |**At Home**   |_Personal Business_ |At home   |Walked the dog |Accommodation |**Recreational Place** |
 | Return leg of RRT |  `j+1`| _Personal Business_ |**At or Go Home** |Walked the dog |Go home   |**Recreational Place** |Accommodation |
 
 I believe the above is the pattern of an RRT, where there are 
@@ -289,6 +293,7 @@ trips <- trips %>%   rename(origin=origpurp1, destination=destpurp1)
 trips <- trips %>% 
   mutate(
     purpose = case_when(
+      origpurp2 == "Employer's Business" | destpurp2 == "Employer's Business" ~ "business",
       origin %in% c("Unknown Purpose (at start of day)", "Not Stated") | 
         destination %in% c("NA", "Not Stated") ~ "unknown",
       origin == "At Home" & destination == "At or Go Home" ~ "RRT",
