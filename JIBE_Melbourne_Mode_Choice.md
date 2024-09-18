@@ -71,6 +71,8 @@ library(janitor) # data cleaning
 library(knitr) # presentation
 library(tidyverse) # data handling
 library(fastDummies) # binary dummy variable utility
+library(sf) # for coordinate reference transformation
+library(dplyr)
 
 conflict_prefer("filter", "dplyr")
 conflict_prefer("lag", "dplyr")
@@ -684,6 +686,130 @@ kable(purpose.MITO)
 
 (*RRT classification method not yet correctly implemented*)
 
+## Export CSV for route checking
+
+As per correspondence with @CorinStaves (2024-09-16) a file is required
+with the following fields:
+
+| Description                      | Variable | Data type |
+|----------------------------------|----------|-----------|
+| Household identifier             | hhid     | string    |
+| Person identifier                | persid   | string    |
+| Trip identifier                  | tripid   | string    |
+| Trip mode                        | linkmode | string    |
+| Trip origin coordinate (Y)       | origlat  | numeric   |
+| Trip origin coordinate (X)       | origlong | numeric   |
+| Trip destination coordinate (Y)  | destlat  | numeric   |
+| Trip destination coordinates (X) | destlong | numeric   |
+
+### Exploration
+
+Before outputing this, lets display a frequency table of unique modes,
+so its clear what we’re dealing with here:
+
+``` r
+trips$linkmode %>% 
+    table() %>%
+    sort(decreasing=TRUE,na.last=TRUE) %>% 
+  as.data.frame() %>% 
+  `colnames<-`(c('Mode','Count')) %>% 
+  adorn_totals() %>% 
+  kable()
+```
+
+| Mode              |  Count |
+|:------------------|-------:|
+| Vehicle Driver    | 114917 |
+| Vehicle Passenger |  51713 |
+| Walking           |  34964 |
+| Train             |   8862 |
+| Bicycle           |   3584 |
+| Tram              |   2485 |
+| Public Bus        |   2315 |
+| School Bus        |    931 |
+| Other             |    732 |
+| Taxi              |    616 |
+| Motorcycle        |    478 |
+| Jogging           |    198 |
+| Mobility Scooter  |     24 |
+| Total             | 221819 |
+
+This broadly makes sense to me, but then again, perhaps there is a more
+simplified schema of modes you’d prefer @CorinStaves? If so, we can
+re-classify using those, just let me know.
+
+Before outputting the CSV, I had a look at a variable summary of the
+data so you know what you’re getting and to confirm the summary stats
+make sense. Because the lon and lat are separated when looking at
+minimums, and highly rounded, this is in no way identifiable, but for
+safety sake I have not included this summary here:
+
+``` r
+trips[c('hhid.x','persid','tripid','linkmode','origlat','origlong','destlat','destlong')] %>% summary()
+```
+
+So, there is a maximum destlat of -1 and a minimum destlong of -2
+according to the summary, which seems odd.
+
+``` r
+trips[(trips$destlat > -3)|(trips$destlong < 3),c("persid","hhid.x","linkmode","time1","destlat","destlong")] %>% print(n=25)
+```
+
+There were 21 of these outlying records (21/221,819=0.0094672%), all of
+which began in Melbourne and were in personal vehicles (n=18), taxi
+(n=2) or bicycle (n=1). All of these outlying trips had only one leg,
+and ranged in duration from 30 to 515 minutes (median 150, IQR 150-300).
+So even in 6 hours, I don’t think its plausible that someone could get
+to the equator (in a car; somewhere south of Lagos?). Best to treat
+these outliers as missing data for trip purposes. I have left them in
+(for now) to allow you to deal with them as you choose – but I recommend
+excluding from analyses.
+
+### Reprojection
+
+Coordinates are required to be EPSG:28355 for the Melbourne analysis. To
+reproject the coordinates (presumably WGS84, EPSG4326; its not in the
+documentation that I have) will require importing a library for spatial
+analysis.
+
+``` r
+# Create an sf object for origin coordinates
+orig_sf <- st_as_sf(trips[c('hhid.x','persid','tripid','linkmode','origlat','origlong','destlat','destlong')], 
+                    coords = c("origlong", "origlat"), 
+                    crs = 4326
+                    )
+
+# Transform the origin coordinates to EPSG:28355
+orig_sf <- st_transform(orig_sf, crs = 28355)
+
+# Extract the transformed coordinates and retain unique tripid for linkage
+orig_coords <- st_coordinates(orig_sf)
+orig_transformed <- data.frame(tripid = trips$tripid, orig_x = orig_coords[, 1], orig_y = orig_coords[, 2])
+
+# Create an sf object for destination coordinates
+dest_sf <- st_as_sf(trips, coords = c("destlong", "destlat"), crs = 4326)
+
+# Transform the destination coordinates to EPSG:28355
+dest_sf <- st_transform(dest_sf, crs = 28355)
+
+# Extract the transformed coordinates and retain tripid
+dest_coords <- st_coordinates(dest_sf)
+dest_transformed <- data.frame(tripid = trips$tripid, dest_x = dest_coords[, 1], dest_y = dest_coords[, 2])
+
+# Merge the transformed coordinates back into the original dataframe using tripid
+trips_transformed <- trips %>%
+  left_join(orig_transformed, by = "tripid") %>%
+  left_join(dest_transformed, by = "tripid") %>%
+  select(hhid.x, persid, tripid, linkmode, orig_x, orig_y, dest_x, dest_y)
+
+# Export the dataframe to a CSV file
+write.csv(trips[c('hhid.x','persid','tripid','linkmode','origlat','origlong','destlat','destlong')], "../trips_preview_EPSG4326.csv", row.names = FALSE)
+write.csv(trips_transformed, "../trips_preview_EPSG28355.csv", row.names = FALSE)
+```
+
+I read both the untransformed and transformed files into QGIS and
+confirmed that the linkage with transformed coordinates was as intended.
+
 ## Attach travel time
 
 Car and pt travel time are simulated in MATSim using the recorded
@@ -817,23 +943,25 @@ sessionInfo()
 ## [1] stats     graphics  grDevices datasets  utils     methods   base     
 ## 
 ## other attached packages:
-##  [1] fastDummies_1.7.4 lubridate_1.9.3   forcats_1.0.0     stringr_1.5.1    
-##  [5] dplyr_1.1.4       purrr_1.0.2       readr_2.1.5       tidyr_1.3.1      
-##  [9] tibble_3.2.1      ggplot2_3.5.1     tidyverse_2.0.0   knitr_1.48       
-## [13] janitor_2.2.0     conflicted_1.2.0 
+##  [1] sf_1.0-17         fastDummies_1.7.4 lubridate_1.9.3   forcats_1.0.0    
+##  [5] stringr_1.5.1     dplyr_1.1.4       purrr_1.0.2       readr_2.1.5      
+##  [9] tidyr_1.3.1       tibble_3.2.1      ggplot2_3.5.1     tidyverse_2.0.0  
+## [13] knitr_1.48        janitor_2.2.0     conflicted_1.2.0 
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] utf8_1.2.4        generics_0.1.3    renv_1.0.7        stringi_1.8.4    
-##  [5] hms_1.1.3         digest_0.6.37     magrittr_2.0.3    evaluate_0.24.0  
-##  [9] grid_4.4.1        timechange_0.3.0  fastmap_1.2.0     jsonlite_1.8.8   
-## [13] fansi_1.0.6       scales_1.3.0      cli_3.6.3         crayon_1.5.3     
-## [17] rlang_1.1.4       bit64_4.0.5       munsell_0.5.1     withr_3.0.1      
-## [21] cachem_1.1.0      yaml_2.3.10       parallel_4.4.1    tools_4.4.1      
-## [25] tzdb_0.4.0        memoise_2.0.1     colorspace_2.1-1  vctrs_0.6.5      
-## [29] R6_2.5.1          lifecycle_1.0.4   snakecase_0.11.1  bit_4.0.5        
-## [33] vroom_1.6.5       pkgconfig_2.0.3   pillar_1.9.0      gtable_0.3.5     
-## [37] glue_1.7.0        xfun_0.47         tidyselect_1.2.1  rstudioapi_0.16.0
-## [41] htmltools_0.5.8.1 rmarkdown_2.28    compiler_4.4.1
+##  [1] utf8_1.2.4         generics_0.1.3     renv_1.0.7         class_7.3-22      
+##  [5] KernSmooth_2.23-24 stringi_1.8.4      hms_1.1.3          digest_0.6.37     
+##  [9] magrittr_2.0.3     evaluate_0.24.0    grid_4.4.1         timechange_0.3.0  
+## [13] fastmap_1.2.0      jsonlite_1.8.8     e1071_1.7-16       DBI_1.2.3         
+## [17] fansi_1.0.6        scales_1.3.0       cli_3.6.3          crayon_1.5.3      
+## [21] rlang_1.1.4        units_0.8-5        bit64_4.0.5        munsell_0.5.1     
+## [25] withr_3.0.1        cachem_1.1.0       yaml_2.3.10        parallel_4.4.1    
+## [29] tools_4.4.1        tzdb_0.4.0         memoise_2.0.1      colorspace_2.1-1  
+## [33] vctrs_0.6.5        R6_2.5.1           proxy_0.4-27       classInt_0.4-10   
+## [37] lifecycle_1.0.4    snakecase_0.11.1   bit_4.0.5          vroom_1.6.5       
+## [41] pkgconfig_2.0.3    pillar_1.9.0       gtable_0.3.5       Rcpp_1.0.13       
+## [45] glue_1.7.0         xfun_0.47          tidyselect_1.2.1   rstudioapi_0.16.0 
+## [49] htmltools_0.5.8.1  rmarkdown_2.28     compiler_4.4.1
 ```
 
 [^1]: Victorian Government Department of Transport. 2022. Victorian

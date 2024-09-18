@@ -13,19 +13,22 @@ knitr:
 
 To conduct the JIBE mode choice modelling for Melbourne requires data preparation using travel survey data. The analysis draws on the [Victorian Integrated Survey of Travel and Activity](https://www.vic.gov.au/victorian-integrated-survey-travel-and-activity) (VISTA[^1]) for 2012-20, used with permission from the Victorian Department of Transport.
 
+[^1]: Victorian Government Department of Transport. 2022. Victorian Integrated Survey of Travel and Activity 2012-2020. https://www.vic.gov.au/victorian-integrated-survey-travel-and-activity
+
 The analysis is conducted for the JIBE project by Carl Higgs (VISTA data preparation) and Mahsa Abdollahyar (travel time estimation) in August/September 2024, in coordination with Dr Qin Zhang, Corin Staves and Dr Belen Zapata-Diomedi.
 
-It expands on an [earlier mode choice analysis](https://github.com/carlhiggs/multimodal_analysis_example) demonstration using the VISTA travel survey using the [Rapid Realisting Routing with R5 (r5r)](https://ipeagit.github.io/r5r/) routing engine, conducted by Carl Higgs for the JIBE project in March 2022 on behalf of Dr Tayebeh Saghapour.  This was subsequently [adapted](https://github.com/jibeproject/odCalculationsMelbourne) by Dr Alan Both for the JIBE project in February 2024.
+It expands on an [earlier mode choice analysis](https://github.com/carlhiggs/multimodal_analysis_example) demonstration using the VISTA travel survey using the [Rapid Realisting Routing with R5 (r5r)](https://ipeagit.github.io/r5r/) routing engine, conducted by Carl Higgs for the JIBE project in March 2022 on behalf of Dr Tayebeh Saghapour. This was subsequently [adapted](https://github.com/jibeproject/odCalculationsMelbourne) by Dr Alan Both for the JIBE project in February 2024.
 
 The purpose of this analysis is to create appropriate data to inform travel demand generation using the [Microscopic Transport Orchestrator (MITO)](https://www.mos.ed.tum.de/tb/forschung/models/travel-demand/mito/) model by Dr Qin Zhang, [transport simulation modelling](https://github.com/jibeproject/matsim-jibe) by Corin Staves, and [microsimulation of downstream health impacts](https://github.com/jibeproject/health_microsim) related to mode choice and environmental exposures by Dr Belen Zapata-Diomedi, Dr Ali Abbas and Steve Pemberton.
 
-A Quarto markdown document [`JIBE_Melbourne_Mode_Choice.qmd`](JIBE_Melbourne_Mode_Choice.qmd) will be used to document the analysis and updated as the project progresses.  This shall also be rendered as a GitHub-Flavoured-Markdown document [`JIBE_Melbourne_Mode_Choice.md`](JIBE_Melbourne_Mode_Choice.md) for convenient online viewing.
+A Quarto markdown document [`JIBE_Melbourne_Mode_Choice.qmd`](JIBE_Melbourne_Mode_Choice.qmd) will be used to document the analysis and updated as the project progresses. This shall also be rendered as a GitHub-Flavoured-Markdown document [`JIBE_Melbourne_Mode_Choice.md`](JIBE_Melbourne_Mode_Choice.md) for convenient online viewing.
 
 Code (at least at first) will draw on example code prepared by Dr Qin Zhang and Corin Staves, adapting as required for use with the VISTA travel survey.
 
-No data or data-related outputs will be included in this document or repository.  By default, output is set to False.  For non-sensitive aspects, e.g. displaying the `sessionInfo()` after running analysis, this may be over-ridden.
+No data or data-related outputs will be included in this document or repository. By default, output is set to False. For non-sensitive aspects, e.g. displaying the `sessionInfo()` after running analysis, this may be over-ridden.
 
 ## Status
+
 27 August 2024: commenced, in progress
 
 ## System environment set up
@@ -34,7 +37,7 @@ No data or data-related outputs will be included in this document or repository.
 rm(list = ls()) # clear memory
 ```
 
-Project dependencies are describe in the [`renv.lock`](./renv.lock) file; see [renv](https://rstudio.github.io/renv/) for more information.  Instructions on installing dependencies using an `renv` lock file are [here](https://rstudio.github.io/renv/articles/renv.html#installing-packages).
+Project dependencies are describe in the [`renv.lock`](./renv.lock) file; see [renv](https://rstudio.github.io/renv/) for more information. Instructions on installing dependencies using an `renv` lock file are [here](https://rstudio.github.io/renv/articles/renv.html#installing-packages).
 
 ```{r}
 library(conflicted) # package conflict handling https://stackoverflow.com/a/75058976
@@ -42,6 +45,8 @@ library(janitor) # data cleaning
 library(knitr) # presentation
 library(tidyverse) # data handling
 library(fastDummies) # binary dummy variable utility
+library(sf) # for coordinate reference transformation
+library(dplyr)
 
 conflict_prefer("filter", "dplyr")
 conflict_prefer("lag", "dplyr")
@@ -51,20 +56,28 @@ conflict_prefer("lag", "dplyr")
 
 Trips will be classified using a standard abbreviation schema, as advised by Dr Qin Zhang and Corin Staves [^2] [^3] [^4]
 
-| Classification | Description |
-|:---------------|:------------|
-| HBW            | Home based work |
-| HBE            | Home based education |
-| HBA            | Home based accompanying/escort trip |
-| HBS            | Home based shopping |
-| HBR            | Home based recreational |
+[^2]: Ortúzar JdD and Willumsen LG (2011) Modelling Transport. Chichester: John Wiley & Sons, Ltd
+
+[^3]: Staves, Corin. (2020). Physical Activity Assessment and Modelling using Household Travel Surveys. 10.13140/RG.2.2.14307.84009.
+
+[^4]: Staves C, Zhang Q, Moeckel R, et al. (2023) Integrating health effects within an agent-based land use and transport model. J Transp Health 33: 101707.
+
+| Classification | Description                                                                  |
+|:--------------------------------------|:-------------------------------|
+| HBW            | Home based work                                                              |
+| HBE            | Home based education                                                         |
+| HBA            | Home based accompanying/escort trip                                          |
+| HBS            | Home based shopping                                                          |
+| HBR            | Home based recreational                                                      |
 | HBO            | Home based other (e.g. health care, religious activity, visit friend/family) |
-| NHBW           | Non-home based work (e.g. from workplace to restaurant) |
-| NHBO           | Non-home based other (e.g. from supermarket to restaurant) |
-| RRT            | Recreational Round Trip |
+| NHBW           | Non-home based work (e.g. from workplace to restaurant)                      |
+| NHBO           | Non-home based other (e.g. from supermarket to restaurant)                   |
+| RRT            | Recreational Round Trip                                                      |
 
 ## Data preparation
+
 ### Read data
+
 ```{r}
 data <- c(
   'H_VISTA_1220_Coord.csv',
@@ -82,6 +95,7 @@ survey
 ```
 
 ### Check data, ensuring that dataset IDs are unique
+
 ```{r}
 # Person identifier must uniquely identify persons (it does; there are 82,118 unique persons)
 table(duplicated(survey$P$persid))
@@ -109,7 +123,8 @@ stopifnot(!any(duplicated(survey$H$hhid)))
 ```
 
 ### Merge data on trips, persons and households
-Left joining households to persons, and left joining that to the trip dataset so we have trips>persons>households, respectively joined using their unique identifiers.
+
+Left joining households to persons, and left joining that to the trip dataset so we have trips\>persons\>households, respectively joined using their unique identifiers.
 
 ```{r}
 trips <- survey$T %>% left_join(survey$P  %>% left_join(survey$H, by='hhid'), by='persid')
@@ -125,11 +140,12 @@ trips %>% colnames()
 ## Assign trip purpose
 
 ### Review trip variables relevant to trip purpose
+
 The example TRADS analysis conducted by Dr Qin Zhang (not included in this repo) derived trip purpose through classification of origin and destination categories.
 
-The VISTA Trips dataset variables (see [dictionary](./dictionaries/T_VISTA_1220%20_data_dictionary_machine_readable.csv)) has this information in the `origplace1` ('Origin Place Type (Summary)') and `destplace1` ('Destination Place Type (Summary)') variables.  The variables `origplace2` and `destplace2` contain more detail if this is required for any downstream analyses.
+The VISTA Trips dataset variables (see [dictionary](./dictionaries/T_VISTA_1220%20_data_dictionary_machine_readable.csv)) has this information in the `origplace1` ('Origin Place Type (Summary)') and `destplace1` ('Destination Place Type (Summary)') variables. The variables `origplace2` and `destplace2` contain more detail if this is required for any downstream analyses.
 
-```{r} 
+```{r}
 #| output: true
 #| label: tbl-places-categories
 
@@ -142,18 +158,19 @@ kable(places)
 
 In the above, 'Accommodation' may be thought of as 'Home'.
 
-There was one trip record missing an origin category (`origplace1` and `origplace2` both as NA), with destination of Accommodation (i.e. home).  
+There was one trip record missing an origin category (`origplace1` and `origplace2` both as NA), with destination of Accommodation (i.e. home).
+
 ```{r}
  trips[is.na(trips$origplace1),][c('origplace1','destplace1','origpurp1','destpurp1')]
 ```
 
-There were coordinates recorded for this record (manual check), and the Vista data contained 'Purpose at Start of Trip Stage (Summary)' (`origpurp1`) as "Work related" and 'Purpose at End of Trip (Summary)' (`destpurp1`) as 'Go home'.  Following the TRADS example, this means, for derived purpose purposes this record would be an NA (i.e. return trip) and for derived full purpose, a home-based work trip. 
+There were coordinates recorded for this record (manual check), and the Vista data contained 'Purpose at Start of Trip Stage (Summary)' (`origpurp1`) as "Work related" and 'Purpose at End of Trip (Summary)' (`destpurp1`) as 'Go home'. Following the TRADS example, this means, for derived purpose purposes this record would be an NA (i.e. return trip) and for derived full purpose, a home-based work trip.
 
-As noted above, VISTA also has origin and destination trip purpose summary variables recorded, `origpurp1` and `destpurp1`.  My understanding, beyond the data dictionary definitions in the above paragraph, is that these provide the reason for being at the origin, and the reason for going to the destination.  Hence in the above example, even though the above was an NA for origin (for whatever reason) it is to be interpreted as 'Work'. 
+As noted above, VISTA also has origin and destination trip purpose summary variables recorded, `origpurp1` and `destpurp1`. My understanding, beyond the data dictionary definitions in the above paragraph, is that these provide the reason for being at the origin, and the reason for going to the destination. Hence in the above example, even though the above was an NA for origin (for whatever reason) it is to be interpreted as 'Work'.
 
 Here are the list of given trip start (origin) and end (destination) purposes:
 
-```{r} 
+```{r}
 #| output: true
 #| label: tbl-purpose-categories
 
@@ -165,19 +182,20 @@ kable(purpose)
 ```
 
 There were recorded instances of NA for one origin and one destination trip purpose.
+
 ```{r}
 trips[is.na(trips$origpurp1)|is.na(trips$destpurp1),][c('origplace1','destplace1','origpurp1','destpurp1')]
 ```
-One of these had a recorded origin of 'Transport Feature' (purpose: to 'Pick-up or Drop-off Someone') with destination of Workplace (purpose: NA).  Arguably if you're going into work, that's a work-related trip.  Perhaps there are grey areas (e.g. its your day off and you're picking up the sandwich you left in the fridge), but it would be consistent with TRADS to interpret this as a 'Non-Home Based Work Trip'.
 
-The other is similar: from Workplace (purpose NA) to Place of Education (purpose: Education).  That's a 'Non-home based work' trip' (there isn't a non-home based education trip in the above classification schema, so the choice is easy).
+One of these had a recorded origin of 'Transport Feature' (purpose: to 'Pick-up or Drop-off Someone') with destination of Workplace (purpose: NA). Arguably if you're going into work, that's a work-related trip. Perhaps there are grey areas (e.g. its your day off and you're picking up the sandwich you left in the fridge), but it would be consistent with TRADS to interpret this as a 'Non-Home Based Work Trip'.
+
+The other is similar: from Workplace (purpose NA) to Place of Education (purpose: Education). That's a 'Non-home based work' trip' (there isn't a non-home based education trip in the above classification schema, so the choice is easy).
 
 Following this review, and below stated considerations, it was determined to identify MITO purpose using origin and destination places and purposes, as required to approximate the required categories.
 
 ### Other considerations
 
-_(following e-mail discussion with Corin 2024-08-31)_
-We are interested in recreational round-trips (RRTs), where these involve going for a walk/ride and returning back to the origin without reaching any other destination (e.g., going for a run, walking the dog). 
+*(following e-mail discussion with Corin 2024-08-31)* We are interested in recreational round-trips (RRTs), where these involve going for a walk/ride and returning back to the origin without reaching any other destination (e.g., going for a run, walking the dog).
 
 To better understand where these kind of trips may be being classified in Vista, we can list the distinct categories in the `origpurp2` variables:
 
@@ -191,9 +209,9 @@ purpose_detail<- full_join(
 kable(purpose_detail)
 ```
 
-So, we see 'Walked the dog was cited approximate 3,500 times as a purpose for origin and destination. 
+So, we see 'Walked the dog was cited approximate 3,500 times as a purpose for origin and destination.
 
-(_incidentally, the purpose category 'Employer's business' likely matches intent of the MITO categories_)
+(*incidentally, the purpose category 'Employer's business' likely matches intent of the MITO categories*)
 
 To see how such trips may be referenced using the higher level purpose and place variables, let's explore more:
 
@@ -209,30 +227,29 @@ So, 'walked the dog' is an example of what someone may conduct as 'personal busi
 survey$T[survey$T$origpurp2=="Walked the dog",c("destpurp2")] %>% table()%>%sort(decreasing=TRUE,na.last=TRUE)%>%as.data.frame()%>%`colnames<-`(c('Purpose','End (n)')) %>%adorn_totals() %>% kable()
 ```
 
-The most common purpose of someone conducting personal business to walk the dog is to 'Go home' (likely a recreational round trip, but identifying the broader pattern requires further investigation).  Another destination purpose is 'Walked the dog', what are the places associated with such a double coding?
+The most common purpose of someone conducting personal business to walk the dog is to 'Go home' (likely a recreational round trip, but identifying the broader pattern requires further investigation). Another destination purpose is 'Walked the dog', what are the places associated with such a double coding?
 
 ```{r}
 #| output: true
  (survey$T %>% filter(survey$T$origpurp2=="Walked the dog" & survey$T$destpurp2=="Walked the dog"))[c("origplace1","destplace2")] %>% table() %>% kable()
 ```
 
-So, these are examples of walking to some location to walk a dog and presumably, these are middle segments of larger trip chains where people have left home to walk the dog, and subsequently return home from walking the dog.  In other words, these likely are examples of recreational round trips (arguably); how could that be captured, or should it?  Maybe not in the case of someone else's home, but perhaps 'Recreational NEC' is simply walking the dog in the middle of a recreational round trip involving that activity.
+So, these are examples of walking to some location to walk a dog and presumably, these are middle segments of larger trip chains where people have left home to walk the dog, and subsequently return home from walking the dog. In other words, these likely are examples of recreational round trips (arguably); how could that be captured, or should it? Maybe not in the case of someone else's home, but perhaps 'Recreational NEC' is simply walking the dog in the middle of a recreational round trip involving that activity.
 
-I believe (from exploration not recorded here) it hints at the general pattern of recreational round trips where these are recorded across multiple legs of trip IDs, 
-e.g.
+I believe (from exploration not recorded here) it hints at the general pattern of recreational round trips where these are recorded across multiple legs of trip IDs, e.g.
 
-| Event | tripno|origpurp1         |destpurp1     |origpurp2      |destpurp2 |origplace1         |destplace1    |
-|------:|------:|:-----------------|:-------------|:--------------|:---------|:------------------|:-------------|
-| Commence RRT |    `j` |**At Home**   |_Personal Business_ |At home   |Walked the dog |Accommodation |**Recreational Place** |
-| Return leg of RRT |  `j+1`| _Personal Business_ |**At or Go Home** |Walked the dog |Go home   |**Recreational Place** |Accommodation |
+|             Event | tripno | origpurp1           | destpurp1           | origpurp2      | destpurp2      | origplace1             | destplace1             |
+|--------:|--------:|:--------|:--------|:--------|:--------|:--------|:--------|
+|      Commence RRT |    `j` | **At Home**         | *Personal Business* | At home        | Walked the dog | Accommodation          | **Recreational Place** |
+| Return leg of RRT |  `j+1` | *Personal Business* | **At or Go Home**   | Walked the dog | Go home        | **Recreational Place** | Accommodation          |
 
-I believe the above is the pattern of an RRT, where there are 
+I believe the above is the pattern of an RRT, where there are
 
-- two consecutive `tripid` within the one persid
-- first has `origpurp1`=='At Home', `destpurp1`== 'Personal Business' and `destplace1` of 'Recreational Place'
-- second has `origplace1`=='Recreational Place',`origpurp1`== 'Personal Business' and `destpurp1`=='At or Go Home'
+-   two consecutive `tripid` within the one persid
+-   first has `origpurp1`=='At Home', `destpurp1`== 'Personal Business' and `destplace1` of 'Recreational Place'
+-   second has `origplace1`=='Recreational Place',`origpurp1`== 'Personal Business' and `destpurp1`=='At or Go Home'
 
-This would be expected to be a more general case than simply walking a dog; e.g. going for a walk in general, or a bike ride; i.e. the intent of RRT.  It is plausible that there could be other purposes than personal business this round trip pattern could be classified under.
+This would be expected to be a more general case than simply walking a dog; e.g. going for a walk in general, or a bike ride; i.e. the intent of RRT. It is plausible that there could be other purposes than personal business this round trip pattern could be classified under.
 
 The high level destination of 'Recreational Place' is too vague (e.g. includes Gym or Racecourses); the lower-level identifier of 'Recrational NEC' is the more useful, and most common one in this scenario -- I believe it implies, a trip for its own recreational purposes.
 
@@ -241,25 +258,26 @@ The high level destination of 'Recreational Place' is too vague (e.g. includes G
  (survey$T %>% filter(survey$T$origpurp1=='At Home' & survey$T$destplace1=='Recreational Place'))['destplace2'] %>% table() %>% sort(decreasing=TRUE,na.last=TRUE) %>% kable()
 ```
 
-I am not sure off hand how best to classify this multi-trip paradigm, that is distinct from other single trip classifications, in code. ** @CorinStaves and @Qinnnnn, keen to hear your thoughts on this! **.
+I am not sure off hand how best to classify this multi-trip paradigm, that is distinct from other single trip classifications, in code. \*\* @CorinStaves and @Qinnnnn, keen to hear your thoughts on this! \*\*.
 
 ### Further trip cleaning prior to assignment, based on above review
 
 To ensure proper coding, `origplace1` will be recorded as work related where origin purpose is 'Work Related' (**for now, pending review with colleagues**)
+
 ```{r}
 trips[is.na(trips$origplace1) & trips$origpurp1=='Work Related','origplace1'] <- 'Workplace'
 ```
 
-
 Also, for now we will replace these respective NA values as 'workplace' (will run this past colleagues later for thoughts on this) to ensure we have the appropriate fields in order to categorise as NHBW, later.
+
 ```{r}
 trips[is.na(trips$destpurp1) & trips$destplace1=='Workplace','destpurp1'] <- 'Work Related'
 trips[is.na(trips$origpurp1) & trips$origplace1=='Workplace','origpurp1'] <- 'Work Related'
 ```
 
-
 ### Revised origin and destination places, following cleaning:
-```{r} 
+
+```{r}
 #| output: true
 #| label: tbl-places-categories.cleaned
 
@@ -271,7 +289,8 @@ kable(places %>% replace(is.na(.), 0)) # NA counts are really zeroes
 ```
 
 ### Revised origin and destination purposes, following cleaning:
-```{r} 
+
+```{r}
 #| output: true
 #| label: tbl-purpose-categories.cleaned
 
@@ -286,7 +305,7 @@ We have now imputed values for the NA places and purposes.
 
 ### Assign trip purpose for MITO
 
-_RRT identification, as per considerations listed above, is not yet implemented_
+*RRT identification, as per considerations listed above, is not yet implemented*
 
 ```{r}
 trips <- trips %>%   rename(origin=origpurp1, destination=destpurp1)
@@ -341,6 +360,7 @@ trips <- trips %>%
 ```
 
 ### Review the assigned trip purposes
+
 ```{r}
 #| output: true
 #| label: tbl-purpose-categories.MITO
@@ -354,13 +374,99 @@ purpose.MITO <- trips$purpose %>%
 kable(purpose.MITO)
 ```
 
-(_RRT classification method not yet correctly implemented_)
+(*RRT classification method not yet correctly implemented*)
 
-## Attach travel time 
+## Export CSV for route checking
+
+As per correspondence with @CorinStaves (2024-09-16) a file is required with the following fields:
+
+| Description                      | Variable | Data type |
+|----------------------------------|----------|-----------|
+| Household identifier             | hhid     | string    |
+| Person identifier                | persid   | string    |
+| Trip identifier                  | tripid   | string    |
+| Trip mode                        | linkmode | string    |
+| Trip origin coordinate (Y)       | origlat  | numeric   |
+| Trip origin coordinate (X)       | origlong | numeric   |
+| Trip destination coordinate (Y)  | destlat  | numeric   |
+| Trip destination coordinates (X) | destlong | numeric   |
+
+### Exploration
+Before outputing this, lets display a frequency table of unique modes, so its clear what we're dealing with here:
+
+```{r}
+#| output: true
+trips$linkmode %>% 
+    table() %>%
+    sort(decreasing=TRUE,na.last=TRUE) %>% 
+  as.data.frame() %>% 
+  `colnames<-`(c('Mode','Count')) %>% 
+  adorn_totals() %>% 
+  kable()
+```
+
+This broadly makes sense to me, but then again, perhaps there is a more simplified schema of modes you'd prefer @CorinStaves?  If so, we can re-classify using those, just let me know.
+
+Before outputting the CSV, I had a look at a variable summary of the data so you know what you're getting and to confirm the summary stats make sense.  Because the lon and lat are separated when looking at minimums, and highly rounded, this is in no way identifiable, but for safety sake I have not included this summary here:
+```{r}
+trips[c('hhid.x','persid','tripid','linkmode','origlat','origlong','destlat','destlong')] %>% summary()
+```
+
+So, there is a maximum destlat of -1 and a minimum destlong of -2 according to the summary, which seems odd.
+
+```{r}
+trips[(trips$destlat > -3)|(trips$destlong < 3),c("persid","hhid.x","linkmode","time1","destlat","destlong")] %>% print(n=25)
+```
+
+There were 21 of these outlying records (21/221,819=`{r} 21/221819*100 %>% round(1)`%), all of which began in Melbourne and were in personal vehicles (n=18), taxi (n=2) or bicycle (n=1).  All of these outlying trips had only one leg, and ranged in duration from 30 to 515 minutes (median 150, IQR 150-300). So even in 6 hours, I don't think its plausible that someone could get to the equator (in a car; somewhere south of Lagos?).  Best to treat these outliers as missing data for trip purposes.  I have left them in (for now) to allow you to deal with them as you choose -- but I recommend excluding from analyses.
+
+### Reprojection
+Coordinates are required to be EPSG:28355 for the Melbourne analysis.  To reproject the coordinates (presumably WGS84, EPSG4326; its not in the documentation that I have) will require importing a library for spatial analysis.
+
+```{r}
+# Create an sf object for origin coordinates
+orig_sf <- st_as_sf(trips[c('hhid.x','persid','tripid','linkmode','origlat','origlong','destlat','destlong')], 
+                    coords = c("origlong", "origlat"), 
+                    crs = 4326
+                    )
+
+# Transform the origin coordinates to EPSG:28355
+orig_sf <- st_transform(orig_sf, crs = 28355)
+
+# Extract the transformed coordinates and retain unique tripid for linkage
+orig_coords <- st_coordinates(orig_sf)
+orig_transformed <- data.frame(tripid = trips$tripid, orig_x = orig_coords[, 1], orig_y = orig_coords[, 2])
+
+# Create an sf object for destination coordinates
+dest_sf <- st_as_sf(trips, coords = c("destlong", "destlat"), crs = 4326)
+
+# Transform the destination coordinates to EPSG:28355
+dest_sf <- st_transform(dest_sf, crs = 28355)
+
+# Extract the transformed coordinates and retain tripid
+dest_coords <- st_coordinates(dest_sf)
+dest_transformed <- data.frame(tripid = trips$tripid, dest_x = dest_coords[, 1], dest_y = dest_coords[, 2])
+
+# Merge the transformed coordinates back into the original dataframe using tripid
+trips_transformed <- trips %>%
+  left_join(orig_transformed, by = "tripid") %>%
+  left_join(dest_transformed, by = "tripid") %>%
+  select(hhid.x, persid, tripid, linkmode, orig_x, orig_y, dest_x, dest_y)
+
+# Export the dataframe to a CSV file
+write.csv(trips[c('hhid.x','persid','tripid','linkmode','origlat','origlong','destlat','destlong')], "../trips_preview_EPSG4326.csv", row.names = FALSE)
+write.csv(trips_transformed, "../trips_preview_EPSG28355.csv", row.names = FALSE)
+```
+
+I read both the untransformed and transformed files into QGIS and confirmed that the linkage with transformed coordinates was as intended.
+
+## Attach travel time
+
 Car and pt travel time are simulated in MATSim using the recorded coordinates/zones of the trip origin and destination
 
-THIS CODE IS NOT CURRENTLY RUN.  Its pending the above analysis being finalised, and {r} being added to the code block to trigger its running.
-```
+THIS CODE IS NOT CURRENTLY RUN. Its pending the above analysis being finalised, and {r} being added to the code block to trigger its running.
+
+```         
 carTravelTime=read_csv("data/melbourne/travelTime/carCongested_10perc.csv")%>%filter(Route=="carCongested")
 ptTravelTime=read_csv("data/melbourne/travelTime/ptTravelTime_matsim.csv")
 
@@ -375,10 +481,12 @@ trips$carTravelTime_sec = as.numeric(trips$carTravelTime_sec)
 trips$ptTravelTime_sec = as.numeric(trips$ptTravelTime_sec)
 trips$dist = as.numeric(trips$dist)
 ```
-## Filter out invalid trips records 
+
+## Filter out invalid trips records
+
 CODE NOT CURRENTLY IMPLEMENTED PENDING ABOVE (needs {r} added to codeblock)
 
-```
+```         
 # 1. filter out trips origin/destination outside Boundary (after filtering 30044 trips) 
 # The boundary is defined as 10 km over the study area and the full coverage of the spatial attributes 
 trips = trips%>%
@@ -396,14 +504,16 @@ trips = trips%>%
 trips = trips%>%
   filter(!t.purpose%in%c("RRT","unknown","business"))
 ```
+
 ## Deal with intrazonal trips
+
 For Manchester there were a substantial number of intrazonal trips, having origin and destination are recorded with the same output area (OA).
 
 For Melbourne, we need to check if intrazonal trips exist, sharing identical origin and destination coordinates.
 
 CODE NOT CURRENTLY IMPLEMENTED PENDING ABOVE (needs {r} added to codeblock)
 
-```
+```         
 # Estimate distance-dependent speed of car and pt
 averageSpeed = trips%>%
   filter(SameOrigAndDest == "false" & dist != 0 & carTravelTime_sec != 0 & ptTravelTime_sec != 0)%>%
@@ -440,13 +550,13 @@ intrazonalTrips=intrazonalTrips%>%
 trips = trips%>%
   rows_update(intrazonalTrips%>% 
                 select(-carSpeed_impute, -ptSpeed_impute),by="t.ID")
-
 ```
+
 ## Write to CSV
 
 CODE NOT CURRENTLY IMPLEMENTED PENDING ABOVE (needs {r} added to codeblock)
 
-```
+```         
 # Get today's date
 today <- format(Sys.Date(), "%Y_%m_%d")
 
@@ -457,18 +567,11 @@ filename <- paste0("trips_Melbourne_JIBE_", today, ".csv")
 write.csv(trips, file = filename, row.names = FALSE)
 ```
 
-
 ## System information for the above analysis
 
 The following information records the version of R used for this analysis:
+
 ```{r}
 #| output: true
 sessionInfo()
 ```
-
-
-
-[^1]: Victorian Government Department of Transport. 2022. Victorian Integrated Survey of Travel and Activity 2012-2020. https://www.vic.gov.au/victorian-integrated-survey-travel-and-activity
-[^2]: Ortúzar JdD and Willumsen LG (2011) Modelling Transport. Chichester: John Wiley & Sons, Ltd
-[^3]: Staves, Corin. (2020). Physical Activity Assessment and Modelling using Household Travel Surveys. 10.13140/RG.2.2.14307.84009. 
-[^4]: Staves C, Zhang Q, Moeckel R, et al. (2023) Integrating health effects within an agent-based land use and transport model. J Transp Health 33: 101707.
