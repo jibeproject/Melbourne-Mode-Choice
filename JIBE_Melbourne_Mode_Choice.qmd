@@ -387,7 +387,11 @@ purpose.MITO <- trips$purpose %>%
 kable(purpose.MITO)
 ```
 
-(*RRT classification method not yet correctly implemented*)
+Save the trips table with purposes included (used as an input in `time_of_day/time_of_day.R`).
+
+```{r}
+saveRDS(trips, "./trips_with_purpose.rds")
+```
 
 ## Export CSV for route checking
 

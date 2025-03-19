@@ -8,17 +8,29 @@ rm(list = ls())
 
 
 # Read model data
-# # Preliminary step: run 'JIBE_Melbourne_Mode_Choice.qmd', and save 'trips' as './trips.rmd'
-# saveRDS(trips, "./trips.rmd")
+# Preliminary step: run 'JIBE_Melbourne_Mode_Choice.qmd', which will output 'trips_with_purpose.rds'.
 
-trips <- readRDS("./trips.rmd") %>%
+trips <- readRDS("./trips_with_purpose.rds") %>%
   filter(purpose != "NA") %>%
   mutate(purpose = factor(purpose))
 
 # filter to Greater Melbourne
-melbSA1s <- st_read("./SA1_2016_AUST_MEL.shp")
+read_zipped_GIS <- function(zipfile, subpath = "", file = NULL, layer = NULL) {
+  temp <- tempfile()
+  unzip(zipfile, exdir = temp)
+  if (is.null(layer)) {
+    st_read(paste0(temp, subpath, file))
+  } else {
+    st_read(paste0(temp, subpath, file), layer)
+  }
+}
+
+melbSA1s <- read_zipped_GIS(zipfile = "./1270055001_sa1_2016_aust_shape.zip",
+                            file = "/SA1_2016_AUST.shp") %>%
+  filter(GCC_NAME16 == "Greater Melbourne")
+
 trips <- trips %>%
-  filter(origSA1 %in% melbSA1s$SA1_MAIN16 | destSA1 %in% melbSA1s$SA1_MAIN16)
+  filter(origSA1 %in% melbSA1s$SA1_MAIN16 & destSA1 %in% melbSA1s$SA1_MAIN16)
 
 
 ######################## TIME OF DAY  ######################## 
@@ -27,11 +39,12 @@ densityData <- list()
 homeBasedPurposes <- c("HBW","HBE","HBS","HBR","HBO","HBA")
 arrivalTimePurposes <- c("HBW","HBE","HBS","HBR","HBO","HBA","NHBW","NHBO")
 
-# SP note: the above lists of purposes do not include 'business', 'RRT' or 'unknown'.  Should they?
+# Note: the above lists of purposes omit 'business', 'RRT' or 'unknown'.
 
 
 # Prepare activity duration data
-homeBasedTrips <- readRDS("./trips.rmd") %>% 
+homeBasedTrips <- readRDS("./trips_with_purpose.rds") %>% 
+  filter(origSA1 %in% melbSA1s$SA1_MAIN16 & destSA1 %in% melbSA1s$SA1_MAIN16) %>%
   filter(full_purpose %in% homeBasedPurposes) %>% 
   mutate(activityDuration = as.numeric(duration)) %>%
   filter(!is.na(activityDuration),
