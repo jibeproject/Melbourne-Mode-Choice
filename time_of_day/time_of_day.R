@@ -15,22 +15,11 @@ trips <- readRDS("./trips_with_purpose.rds") %>%
   mutate(purpose = factor(purpose))
 
 # filter to Greater Melbourne
-read_zipped_GIS <- function(zipfile, subpath = "", file = NULL, layer = NULL) {
-  temp <- tempfile()
-  unzip(zipfile, exdir = temp)
-  if (is.null(layer)) {
-    st_read(paste0(temp, subpath, file))
-  } else {
-    st_read(paste0(temp, subpath, file), layer)
-  }
-}
-
-melbSA1s <- read_zipped_GIS(zipfile = "./1270055001_sa1_2016_aust_shape.zip",
-                            file = "/SA1_2016_AUST.shp") %>%
+melbSA1s <- st_read(file.choose()) %>%
   filter(GCC_NAME16 == "Greater Melbourne")
 
 trips <- trips %>%
-  filter(origSA1 %in% melbSA1s$SA1_MAIN16 & destSA1 %in% melbSA1s$SA1_MAIN16)
+  filter(origsa1 %in% melbSA1s$SA1_MAIN16 & destsa1 %in% melbSA1s$SA1_MAIN16)
 
 
 ######################## TIME OF DAY  ######################## 
@@ -44,7 +33,7 @@ arrivalTimePurposes <- c("HBW","HBE","HBS","HBR","HBO","HBA","NHBW","NHBO")
 
 # Prepare activity duration data
 homeBasedTrips <- readRDS("./trips_with_purpose.rds") %>% 
-  filter(origSA1 %in% melbSA1s$SA1_MAIN16 & destSA1 %in% melbSA1s$SA1_MAIN16) %>%
+  filter(origsa1 %in% melbSA1s$SA1_MAIN16 & destsa1 %in% melbSA1s$SA1_MAIN16) %>%
   filter(full_purpose %in% homeBasedPurposes) %>% 
   mutate(activityDuration = as.numeric(duration)) %>%
   filter(!is.na(activityDuration),

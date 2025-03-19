@@ -519,26 +519,46 @@ purposes.
 | Squash Court         |    6 |
 
 I am not sure off hand how best to classify this multi-trip paradigm,
-that is distinct from other single trip classifications, in code. \*\*
-@CorinStaves and @Qinnnnn, keen to hear your thoughts on this! \*\*.
+that is distinct from other single trip classifications, in code.
+
+*Update* The issue of multiple trips was addressed further in an email
+from Corin dated 2025-02-14, where he indidcated that no further action
+seemed necessary at this stage for round trips represented by multiple
+consecutive legs; it was sufficient for each leg to remain recorded by
+reference to the destination purpose of that particular leg.
 
 ### Further trip cleaning prior to assignment, based on above review
 
-To ensure proper coding, `origplace1` will be recorded as work related
-where origin purpose is ‘Work Related’ (**for now, pending review with
-colleagues**)
+To ensure proper coding, `origplace1`/`destplace1` will be recorded as
+work related where it is NA or Unknown and origin/destination purpose is
+‘Work Related’ or ‘Unknown’
 
 ``` r
-trips[is.na(trips$origplace1) & trips$origpurp1=='Work Related','origplace1'] <- 'Workplace'
+trips <- trips %>%
+  mutate(origplace1 = ifelse((is.na(origplace1) | str_detect(origplace1, "Unknown")) & 
+                               origpurp1 == "Work Related",
+                             "Workplace", 
+                             origplace1),
+         destplace1 = ifelse((is.na(destplace1) | str_detect(destplace1, "Unknown")) & 
+                               destpurp1 == "Work Related",
+                             "Workplace", 
+                             destplace1))
 ```
 
-Also, for now we will replace these respective NA values as ‘workplace’
-(will run this past colleagues later for thoughts on this) to ensure we
-have the appropriate fields in order to categorise as NHBW, later.
+Also, we will replace these respective NA or Unknown values as
+‘workplace’ to ensure we have the appropriate fields in order to
+categorise as NHBW, later.
 
 ``` r
-trips[is.na(trips$destpurp1) & trips$destplace1=='Workplace','destpurp1'] <- 'Work Related'
-trips[is.na(trips$origpurp1) & trips$origplace1=='Workplace','origpurp1'] <- 'Work Related'
+trips <- trips %>%
+  mutate(origpurp1 = ifelse((is.na(origpurp1) | str_detect(origpurp1, "Unknown")) & 
+                              origplace1 == "Workplace",
+                            "Work Related", 
+                            origpurp1),
+         destpurp1 = ifelse((is.na(destpurp1) | str_detect(destpurp1, "Unknown")) & 
+                              destplace1 == "Workplace",
+                            "Work Related", 
+                            destpurp1))
 ```
 
 ### Revised origin and destination places, following cleaning:
@@ -579,7 +599,7 @@ kable(purpose %>% replace(is.na(.), 0)) # NA counts are really zeroes
 | Purpose                           | Start (n) | End (n) |
 |:----------------------------------|----------:|--------:|
 | At Home                           |     87031 |       0 |
-| Work Related                      |     28466 |   28486 |
+| Work Related                      |     28788 |   28486 |
 | Buy Something                     |     23742 |   23748 |
 | Social                            |     22758 |   22950 |
 | Pick-up or Drop-off Someone       |     15347 |   15372 |
@@ -588,7 +608,7 @@ kable(purpose %>% replace(is.na(.), 0)) # NA counts are really zeroes
 | Education                         |      8344 |    8365 |
 | Accompany Someone                 |      7623 |    7725 |
 | Pick-up or Deliver Something      |      3120 |    3122 |
-| Unknown Purpose (at start of day) |      1832 |       0 |
+| Unknown Purpose (at start of day) |      1510 |       0 |
 | Other Purpose                     |       998 |     697 |
 | Change Mode                       |        12 |     142 |
 | Not Stated                        |         4 |       4 |
@@ -598,9 +618,6 @@ kable(purpose %>% replace(is.na(.), 0)) # NA counts are really zeroes
 We have now imputed values for the NA places and purposes.
 
 ### Assign trip purpose for MITO
-
-*RRT identification, as per considerations listed above, is not yet
-implemented*
 
 ``` r
 trips <- trips %>%   rename(origin=origpurp1, destination=destpurp1)
@@ -623,35 +640,31 @@ trips <- trips %>%
         destplace1 == "Place of Education" ~ "HBE",
         destplace1 == "Shops" ~ "HBS",
         destplace1 %in% c("Recreational Place","Natural Feature", "Social Place") ~ "HBR",
-        destplace1 %in% c("Accommodation","Change Mode","Transport Feature", "Other") ~ "HBO"
+        TRUE ~ "HBO"
       ),
       destination == "At or Go Home" ~ "NA",
       origin == "Work Related" | destination == "Work Related" ~ "NHBW",
       TRUE ~ "NHBO"
     ),
+    # 'full_purpose' is the same as 'purpose', unless 'purpose' is NA (that is, trip legs returning
+    # to home), in which case 'full_purpose' is determined by the origin of the trip leg
     full_purpose = case_when(
-        destination %in% c("Unknown Purpose (at start of day)", "Not Stated") | 
-          origin %in% c("NA", "Not Stated") ~ "unknown",
-        destination == "At Home" & origin == "At or Go Home" ~ "RRT",
-        destination == "At Home" ~ case_when(
-          origin == "Work Related" ~ "HBW",
-          origin == "Education" ~ "HBE",
-          origin == "Buy Something" ~ "HBS",
-          origin == "Recreational" ~ "HBR",
-          origin == "Other Purpose" ~ "HBO",
-          origin %in% c("Accompany Someone","Pick-up or Drop-off Someone") ~ "HBA",
-          # Classify remaining trips using place information if clearer than purpose
-          origplace1 == "Workplace" ~ "HBW",
-          origplace1 == "Place of Education" ~ "HBE",
-          origplace1 == "Shops" ~ "HBS",
-          origplace1 %in% c("Recreational Place","Natural Feature", "Social Place") ~ "HBR",
-          origplace1 %in% c("Accommodation","Change Mode","Transport Feature", "Other") ~ "HBO"
-        ),
-        origin == "At or Go Home" ~ "NA",
-        destination == "Work Related" | origin == "Work Related" ~ "NHBW",
-      TRUE ~ purpose
-    )
-  )
+      purpose != "NA" ~ purpose,
+      # remaining classifications only apply if 'purpose' is NA
+      origpurp2 == "Employer's Business"  ~ "business",
+      str_detect(origin, "Unknown") | str_detect(origin, "Not Stated") | is.na(origin) ~ "unknown",
+      origin == "Work Related" ~ "HBW",
+      origin == "Education" ~ "HBE",
+      origin == "Buy Something" ~ "HBS",
+      origin == "Recreational" ~ "HBR",
+      origin == "Other Purpose" ~ "HBO",
+      origin %in% c("Accompany Someone", "Pick-up or Deliver Something") ~ "HBA",
+      origplace1 == "Workplace" ~ "HBW",
+      origplace1 == "Place of Education" ~ "HBE",
+      origplace1 == "Shops" ~ "HBS",
+      origplace1 %in% c("Recreational Place","Natural Feature", "Social Place") ~ "HBR",
+      TRUE ~ "HBO"
+    ))
 ```
 
 ### Review the assigned trip purposes
@@ -667,24 +680,28 @@ purpose.MITO <- trips$purpose %>%
 kable(purpose.MITO)
 ```
 
-| MITO Purpose           |  Count |
-|:-----------------------|-------:|
-| NA                     |  83858 |
-| NHBO                   |  30777 |
-| HBR                    |  18511 |
-| HBW                    |  16925 |
-| HBA                    |  15321 |
-| HBS                    |  14628 |
-| NHBW                   |  10498 |
-| business               |  10078 |
-| HBE                    |   7721 |
-| HBO                    |   7286 |
-| slipped through cracks |   4325 |
-| unknown                |   1799 |
-| RRT                    |     92 |
-| Total                  | 221819 |
+| MITO Purpose |  Count |
+|:-------------|-------:|
+| NA           |  84115 |
+| NHBO         |  30777 |
+| HBR          |  18511 |
+| HBW          |  16925 |
+| HBA          |  15321 |
+| HBS          |  14628 |
+| HBO          |  11611 |
+| NHBW         |  10548 |
+| business     |  10078 |
+| HBE          |   7721 |
+| unknown      |   1492 |
+| RRT          |     92 |
+| Total        | 221819 |
 
-(*RRT classification method not yet correctly implemented*)
+Save the trips table with purposes included (used as an input in
+`time_of_day/time_of_day.R`).
+
+``` r
+saveRDS(trips, "./trips_with_purpose.rds")
+```
 
 ## Export CSV for route checking
 
@@ -960,8 +977,8 @@ sessionInfo()
 ## [33] vctrs_0.6.5        R6_2.5.1           proxy_0.4-27       classInt_0.4-10   
 ## [37] lifecycle_1.0.4    snakecase_0.11.1   bit_4.0.5          vroom_1.6.5       
 ## [41] pkgconfig_2.0.3    pillar_1.9.0       gtable_0.3.5       Rcpp_1.0.13       
-## [45] glue_1.7.0         xfun_0.47          tidyselect_1.2.1   rstudioapi_0.16.0 
-## [49] htmltools_0.5.8.1  rmarkdown_2.28     compiler_4.4.1
+## [45] glue_1.7.0         xfun_0.47          tidyselect_1.2.1   htmltools_0.5.8.1 
+## [49] rmarkdown_2.28     compiler_4.4.1
 ```
 
 [^1]: Victorian Government Department of Transport. 2022. Victorian
