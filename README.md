@@ -27,6 +27,7 @@ Dr Tayebeh Saghapour. This was subsequently
 [adapted](https://github.com/jibeproject/odCalculationsMelbourne) by Dr
 Alan Both for the JIBE project in February 2024.
 
+### Mode choice
 The purpose of this analysis is to create appropriate data to inform
 travel demand generation using the [Microscopic Transport Orchestrator
 (MITO)](https://www.mos.ed.tum.de/tb/forschung/models/travel-demand/mito/)
@@ -53,13 +54,16 @@ repository. By default, output is set to False. For non-sensitive
 aspects, e.g. displaying the `sessionInfo()` after running analysis,
 this may be over-ridden.
 
+### Time of day
+The file `trips_with_purpose.rds` is generated from running `JIBE_Melbourne_Mode_Choice.qmd`.  The script `time_of_day/time_of_day.R` file is then run using this output to generate `time_of_day.csv` which is used as an input for Melbourne's MITO model (`input/mito/timeOfDay/timeOfDay.csv`).
+
 ## Status
 
-27 August 2024: commenced, in progress
+30 April 2025: in progress
 
 ## Contributors
 
-Carl Higgs, Qin Zhang, Corin Staves, Belen Zapata-Diomedi
+Carl Higgs, Steve Pemberton, Qin Zhang, Corin Staves, Belen Zapata-Diomedi
 
 
 [^1]: Victorian Government Department of Transport. 2022. Victorian
