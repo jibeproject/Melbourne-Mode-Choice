@@ -76,3 +76,8 @@ ggplot(modeShareFullPurpose) +
   facet_wrap(.~full_purpose, nrow  = 4)
 
 write_csv(modeShareFullPurpose,"./mode_share/mode_share_full_purpose.csv")
+
+# TO DO: 
+# - determine whether 'purpose' or 'full purpose' should be used
+# - save the final output as 'calibration_initial.csv' (instead of 
+#   'mode_share_purpose.csv' and 'mode_share_full_purpose.csv)
