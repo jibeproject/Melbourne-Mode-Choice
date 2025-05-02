@@ -8,10 +8,10 @@ rm(list = ls())
 
 
 ### load data ###
-# # Preliminary step: run 'JIBE_Melbourne_Mode_Choice.qmd', and save 'trips' as './trips.rmd'
-# saveRDS(trips, "./trips.rmd")
+# # Preliminary step: run 'JIBE_Melbourne_Mode_Choice.qmd', and save 'trips' as './trips.rds'
+# saveRDS(trips, "./trips.rds")
 
-trips <- readRDS("./trips.rmd")
+trips <- readRDS("./trips.rds")
 
 # filter to Greater Melbourne
 melbSA1s <- st_read("./SA1_2016_AUST_MEL.shp")

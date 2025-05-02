@@ -387,10 +387,11 @@ purpose.MITO <- trips$purpose %>%
 kable(purpose.MITO)
 ```
 
-Save the trips table with purposes included (used as an input in `time_of_day/time_of_day.R`).
+Save the trips table with purposes included (used as an input in `time_of_day/time_of_day.R`, `mode_share/modeShare.R` and `mean_trip_length/avgTripLength.R`) and persons table (used as an input in `mean_trip_length/avgTripLength.R`).
 
 ```{r}
 saveRDS(trips, "./trips_with_purpose.rds")
+saveRDS(survey$P, "./persons.rds")
 ```
 
 ## Export CSV for route checking
