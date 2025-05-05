@@ -13,7 +13,7 @@ rm(list = ls())
 # saveRDS(trips, "./trips.rds")
 # saveRDS(survey$P, "./persons.rds")
 
-trips <- readRDS("./trips.rds")
+trips <- readRDS("./trips_with_purpose.rds")
 persons <- readRDS("./persons.rds")
 
 # filter trips to Greater Melbourne
