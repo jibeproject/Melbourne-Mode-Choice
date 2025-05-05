@@ -11,7 +11,7 @@ rm(list = ls())
 # # Preliminary step: run 'JIBE_Melbourne_Mode_Choice.qmd', and save 'trips' as './trips.rds'
 # saveRDS(trips, "./trips.rds")
 
-trips <- readRDS("./trips.rds")
+trips <- readRDS("./trips_with_purpose.rds")
 
 # filter to Greater Melbourne
 melbSA1s <- st_read("./SA1_2016_AUST_MEL.shp")
@@ -39,7 +39,7 @@ trips <- trips %>%
 
 ### mode share by purpose and by full_purpose ###
 trips <- trips %>%
-  mutate(t.m_main_agg5 = case_when(
+  mutate(mode = case_when(
     linkmode %in% c("Vehicle Passenger") ~ "autoPassenger",
     linkmode %in% c("Vehicle Driver") ~ "autoDriver",
     linkmode %in% c("Public Bus", "School Bus", "Train", "Tram") ~ "pt",
@@ -47,37 +47,36 @@ trips <- trips %>%
     linkmode %in% c("Bicycle") ~ "bicycle"
   ))
 
+# visualisation of mode share by 'purpose'
 modeSharePurpose <- trips%>%
   filter(!is.na(purpose)) %>%
-  filter(!is.na(t.m_main_agg5)) %>%
-  group_by(calibrationRegion, purpose, t.m_main_agg5) %>%
-  summarise(n = n()) %>%
-  mutate(share = n/sum(n))
+  filter(!is.na(mode)) %>%
+  group_by(calibrationRegion, purpose, mode) %>%
+  summarise(count = n()) %>%
+  mutate(share = count/sum(count)) %>%
+  mutate(factor = 0)
 
 ggplot(modeSharePurpose) +
   geom_bar(aes(x=calibrationRegion, y=share, 
-               group = t.m_main_agg5, fill = t.m_main_agg5), 
+               group = mode, fill = mode), 
            stat="identity", position="fill") +
   facet_wrap(.~purpose, nrow  = 4)
 
-write_csv(modeSharePurpose,"./mode_share/mode_share_purpose.csv")
 
+# visualisation of mode share by 'full_purpose'
 modeShareFullPurpose <- trips%>%
   filter(!is.na(full_purpose)) %>%
-  filter(!is.na(t.m_main_agg5)) %>%
-  group_by(calibrationRegion, full_purpose, t.m_main_agg5) %>%
-  summarise(n = n()) %>%
-  mutate(share = n/sum(n))
+  filter(!is.na(mode)) %>%
+  group_by(calibrationRegion, full_purpose, mode) %>%
+  summarise(count = n()) %>%
+  mutate(share = count/sum(count))
 
 ggplot(modeShareFullPurpose) +
   geom_bar(aes(x=calibrationRegion, y=share, 
-               group = t.m_main_agg5, fill = t.m_main_agg5), 
+               group = mode, fill = mode), 
            stat="identity", position="fill") +
   facet_wrap(.~full_purpose, nrow  = 4)
 
-write_csv(modeShareFullPurpose,"./mode_share/mode_share_full_purpose.csv")
 
-# TO DO: 
-# - determine whether 'purpose' or 'full purpose' should be used
-# - save the final output as 'calibration_initial.csv' (instead of 
-#   'mode_share_purpose.csv' and 'mode_share_full_purpose.csv)
+# write 'purpose' output (used as mito input)
+write_csv(modeSharePurpose,"./mode_share/calibration_initial.csv")
