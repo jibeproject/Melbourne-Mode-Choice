@@ -100,6 +100,8 @@ advised by Dr Qin Zhang and Corin Staves [^2] [^3] [^4]
 ### Read data
 
 ``` r
+print("Select 'H_VISTA_1220_Coord.csv'")
+dir <- dirname(file.choose())
 data <- c(
   'H_VISTA_1220_Coord.csv',
   'JTE_VISTA_1220_Coord.csv',
@@ -110,7 +112,7 @@ data <- c(
 )
 survey<-list()
 for (d in data) {
-  survey[[sapply(strsplit(d,split='_',1),`[`,1)]]<-read_csv(glue::glue('../../{d}')) 
+  survey[[sapply(strsplit(d,split='_',1),`[`,1)]]<-read_csv(glue::glue('{dir}/{d}')) 
 }
 survey
 ```
@@ -697,10 +699,13 @@ kable(purpose.MITO)
 | Total        | 221819 |
 
 Save the trips table with purposes included (used as an input in
-`time_of_day/time_of_day.R`).
+`time_of_day/time_of_day.R`, `mode_share/modeShare.R` and
+`mean_trip_length/avgTripLength.R`) and persons table (used as an input
+in `mean_trip_length/avgTripLength.R`).
 
 ``` r
 saveRDS(trips, "./trips_with_purpose.rds")
+saveRDS(survey$P, "./persons.rds")
 ```
 
 ## Export CSV for route checking

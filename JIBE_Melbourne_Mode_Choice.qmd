@@ -79,6 +79,8 @@ Trips will be classified using a standard abbreviation schema, as advised by Dr 
 ### Read data
 
 ```{r}
+print("Select 'H_VISTA_1220_Coord.csv'")
+dir <- dirname(file.choose())
 data <- c(
   'H_VISTA_1220_Coord.csv',
   'JTE_VISTA_1220_Coord.csv',
@@ -89,7 +91,7 @@ data <- c(
 )
 survey<-list()
 for (d in data) {
-  survey[[sapply(strsplit(d,split='_',1),`[`,1)]]<-read_csv(glue::glue('../../{d}')) 
+  survey[[sapply(strsplit(d,split='_',1),`[`,1)]]<-read_csv(glue::glue('{dir}/{d}')) 
 }
 survey
 ```
