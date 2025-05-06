@@ -13,8 +13,9 @@ rm(list = ls())
 
 trips <- readRDS("./trips_with_purpose.rds")
 
-# filter to Greater Melbourne
-melbSA1s <- st_read("./SA1_2016_AUST_MEL.shp")
+# filter to Greater Melbourne# filter to Greater Melbourne
+print("Select 'SA_2016_AUST_MEL.shp' or equivalent shapefile")
+melbSA1s <- st_read(file.choose())
 trips <- trips %>%
   filter(origSA1 %in% melbSA1s$SA1_MAIN16 | destSA1 %in% melbSA1s$SA1_MAIN16)
 
