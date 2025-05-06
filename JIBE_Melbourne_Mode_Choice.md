@@ -708,6 +708,29 @@ saveRDS(trips, "./trips_with_purpose.rds")
 saveRDS(survey$P, "./persons.rds")
 ```
 
+``` r
+source('./mode_share/modeShare.R')
+## [1] "Select 'SA_2016_AUST_MEL.shp' or equivalent shapefile"
+## Reading layer `SA1_2016_AUST_MEL' from data source 
+##   `C:\Users\E33390\OneDrive - RMIT University\General - JIBE working group\melbourne\input\zonesShapefile\SA1_2016_AUST_MEL.shp' 
+##   using driver `ESRI Shapefile'
+## Simple feature collection with 10289 features and 14 fields
+## Geometry type: MULTIPOLYGON
+## Dimension:     XY
+## Bounding box:  xmin: 144.3336 ymin: -38.50299 xmax: 145.8784 ymax: -37.1751
+## Geodetic CRS:  GDA94
+## [1] "Select calibrationRegions.csv"
+source('./mean_trip_length/avgTripLength.R')
+## Reading layer `SA1_2016_AUST_MEL' from data source 
+##   `C:\Users\E33390\OneDrive - RMIT University\General - JIBE working group\melbourne\input\zonesShapefile\SA1_2016_AUST_MEL.shp' 
+##   using driver `ESRI Shapefile'
+## Simple feature collection with 10289 features and 14 fields
+## Geometry type: MULTIPOLYGON
+## Dimension:     XY
+## Bounding box:  xmin: 144.3336 ymin: -38.50299 xmax: 145.8784 ymax: -37.1751
+## Geodetic CRS:  GDA94
+```
+
 ## Export CSV for route checking
 
 As per correspondence with @CorinStaves (2024-09-16) a file is required
@@ -741,20 +764,20 @@ trips$linkmode %>%
 
 | Mode              |  Count |
 |:------------------|-------:|
-| Vehicle Driver    | 114917 |
-| Vehicle Passenger |  51713 |
-| Walking           |  34964 |
-| Train             |   8862 |
-| Bicycle           |   3584 |
-| Tram              |   2485 |
-| Public Bus        |   2315 |
-| School Bus        |    931 |
-| Other             |    732 |
-| Taxi              |    616 |
-| Motorcycle        |    478 |
-| Jogging           |    198 |
-| Mobility Scooter  |     24 |
-| Total             | 221819 |
+| Vehicle Driver    | 101391 |
+| Vehicle Passenger |  45485 |
+| Walking           |  31361 |
+| Train             |   8720 |
+| Bicycle           |   3225 |
+| Tram              |   2481 |
+| Public Bus        |   2102 |
+| School Bus        |    767 |
+| Other             |    634 |
+| Taxi              |    567 |
+| Motorcycle        |    402 |
+| Jogging           |    196 |
+| Mobility Scooter  |     19 |
+| Total             | 197350 |
 
 This broadly makes sense to me, but then again, perhaps there is a more
 simplified schema of modes you’d prefer @CorinStaves? If so, we can
