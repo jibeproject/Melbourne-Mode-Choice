@@ -32,7 +32,7 @@ The file `trips_with_purpose.rds` is generated from running `JIBE_Melbourne_Mode
 
 ### Mode share
 
-The script `mode_share/make calibration regions.R` is a data-preparation script which allocates Melbourne LGAs to inner, middle and outer regions, based on distance from the CBD, and generates the output `calibrationRegions.csv`. The script `mode_share/modeShare.R` calculates mode share by region and trip purpose, and generates `calibration_initial.csv`. Both are used as inputs for Melbourne's MITO model (`input/mito/modeChoice/calibrationRegions.csv` and `input/mito/modeChoice/calibrationRegions.csv`).
+The script `mode_share/make calibration regions.R` is a data-preparation script which allocates Melbourne LGAs to inner, middle and outer regions, based on distance from the CBD, and generates the output `calibrationRegions.csv`. The script `mode_share/modeShare.R` calculates mode share by region and trip purpose, and generates `calibration_initial.csv`. Both are used as inputs for Melbourne's MITO model (`input/mito/modeChoice/calibrationRegions.csv` and `input/mito/modeChoice/calibration_initial.csv`).
 
 ### Mean trip length
 
