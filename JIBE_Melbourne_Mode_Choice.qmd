@@ -79,6 +79,9 @@ Trips will be classified using a standard abbreviation schema, as advised by Dr 
 ### Read data
 
 ```{r}
+#| label: select.H_VISTA_1220_Coord.csv
+print("Select 'H_VISTA_1220_Coord.csv'")
+dir <- dirname(file.choose())
 data <- c(
   'H_VISTA_1220_Coord.csv',
   'JTE_VISTA_1220_Coord.csv',
@@ -89,7 +92,7 @@ data <- c(
 )
 survey<-list()
 for (d in data) {
-  survey[[sapply(strsplit(d,split='_',1),`[`,1)]]<-read_csv(glue::glue('../../{d}')) 
+  survey[[sapply(strsplit(d,split='_',1),`[`,1)]]<-read_csv(glue::glue('{dir}/{d}')) 
 }
 survey
 ```
@@ -390,8 +393,20 @@ kable(purpose.MITO)
 Save the trips table with purposes included (used as an input in `time_of_day/time_of_day.R`, `mode_share/modeShare.R` and `mean_trip_length/avgTripLength.R`) and persons table (used as an input in `mean_trip_length/avgTripLength.R`).
 
 ```{r}
+#| output: true
+#| label: save-outputs.MITO
 saveRDS(trips, "./trips_with_purpose.rds")
 saveRDS(survey$P, "./persons.rds")
+```
+```{r}
+#| output: true
+#| label: mode_share.select.SA1shapefile.then.calibrationRegions.csv
+source('./mode_share/modeShare.R')
+```
+```{r}
+#| output: true
+#| label: mean_trip_length.select.SA1shapefile
+source('./mean_trip_length/avgTripLength.R')
 ```
 
 ## Export CSV for route checking
@@ -477,6 +492,7 @@ write.csv(trips_transformed, "../trips_preview_EPSG28355.csv", row.names = FALSE
 ```
 
 I read both the untransformed and transformed files into QGIS and confirmed that the linkage with transformed coordinates was as intended.
+
 
 ## Attach travel time
 

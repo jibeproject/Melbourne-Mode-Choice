@@ -13,15 +13,17 @@ rm(list = ls())
 
 trips <- readRDS("./trips_with_purpose.rds")
 
-# filter to Greater Melbourne
-melbSA1s <- st_read("./SA1_2016_AUST_MEL.shp")
+# filter to Greater Melbourne# filter to Greater Melbourne
+print("Select 'SA_2016_AUST_MEL.shp' or equivalent shapefile")
+melbSA1s <- st_read(file.choose())
 trips <- trips %>%
-  filter(origSA1 %in% melbSA1s$SA1_MAIN16 | destSA1 %in% melbSA1s$SA1_MAIN16)
+  filter(origsa1 %in% melbSA1s$SA1_MAIN16 | destsa1 %in% melbSA1s$SA1_MAIN16)
 
 # add region, based on LGA of trip origin
-calibrationRegions <- read.csv("./mode_share/calibrationRegions.csv")
+print('Select calibrationRegions.csv')
+calibrationRegions <- read.csv(file.choose())
 trips <- trips %>%
-  left_join(calibrationRegions, by = c("origSA1" = "SA1_MAIN16"))
+  left_join(calibrationRegions, by = c("origsa1" = "SA1_MAIN16"))
 
 # # alternative method for adding region when VISTA data omits SA1s
 # trips <- trips %>%

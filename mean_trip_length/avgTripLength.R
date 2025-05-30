@@ -17,9 +17,9 @@ trips <- readRDS("./trips_with_purpose.rds")
 persons <- readRDS("./persons.rds")
 
 # filter trips to Greater Melbourne
-melbSA1s <- st_read("./SA1_2016_AUST_MEL.shp")
+melbSA1s <- st_read(file.choose())
 trips <- trips %>%
-  filter(origSA1 %in% melbSA1s$SA1_MAIN16 | destSA1 %in% melbSA1s$SA1_MAIN16)
+  filter(destsa1 %in% melbSA1s$SA1_MAIN16 | destsa1 %in% melbSA1s$SA1_MAIN16)
 
 
 ### average trip length by purpose by person category ###
